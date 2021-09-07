@@ -1,9 +1,17 @@
 use std::f64::consts::PI;
-use crate::math::Vec3;
-use crate::core::Film;
+use crate::core::{
+    Film,
+    Spectrum,
+};
+use crate::math::{ 
+    Sampler,
+    Vec2,
+    Vec3
+};
+use crate::ray::Ray;
 
-#[derive(Copy, Clone, Debug)]
 pub struct PerspectiveCamera {
+    width: u32, height: u32,
     eye: Vec3,
     look_at: Vec3,
     vfov: f64,
@@ -16,11 +24,13 @@ pub struct PerspectiveCamera {
     vertical: Vec3,
     up: Vec3,
     forward: Vec3,
-    right: Vec3
+    right: Vec3,
+
+    film: Film,
 }
 
 impl PerspectiveCamera {
-    pub fn new() -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         let eye = Vec3::from(0.); 
         let look_at = Vec3::new(0.,0.,10.);
         let focus_dist = (eye - look_at).length();
@@ -42,6 +52,7 @@ impl PerspectiveCamera {
         let vertical = 2. * half_height * focus_dist * up;
 
         Self {
+            width, height,
             eye: eye,
             look_at: look_at,
             vfov: vfov,
@@ -54,6 +65,21 @@ impl PerspectiveCamera {
             lower_left: lower_left,
             horizontal: horizontal,
             vertical: vertical,
+            film: Film::new(width, height, "image"),
         }
+    }
+
+    pub fn get_ray(&self, uv: &Vec2) -> Ray {
+        let rp: Vec2 = self.aperture * Sampler::sample_from_unit_disk();
+        let offset: Vec3 = self.right * rp.x + self.up * rp.y;        
+        Ray::new(self.eye + offset, self.lower_left + uv.x * self.horizontal + uv.y * self.vertical - self.eye - offset)
+    }
+
+    pub fn write_to_film(&mut self, x:u32, y:u32, color: Spectrum) {
+        self.film.set_pixel(x, y, color);
+    }
+
+    pub fn write_film_to_file(&mut self) {
+        self.film.write_image();
     }
 }

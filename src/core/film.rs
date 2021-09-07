@@ -22,7 +22,7 @@ impl Film {
         }
     }
 
-    pub fn set_pixel(&mut self, color: Spectrum, x:u32, y:u32) {
+    pub fn set_pixel(&mut self, x:u32, y:u32, color: Spectrum) {
         let index = (x + self.width * y) as usize;
         self.pixels[index] = color;
     }

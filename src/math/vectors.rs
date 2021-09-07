@@ -180,3 +180,163 @@ impl ops::DivAssign<f64> for Vec3 {
         };
     }
 }
+
+
+// ----------------------------------------------------------------------------
+// VEC2
+// ----------------------------------------------------------------------------
+#[derive(Copy, Clone, Debug)]
+pub struct Vec2 {
+    pub x: f64,
+    pub y: f64
+}
+
+impl Vec2 {
+    pub fn new(x: f64, y: f64) -> Self {
+        Self {
+            x, y
+        }
+    }
+
+    pub fn x(&self) -> f64 { self.x }
+    pub fn y(&self) -> f64 { self.y }
+
+    pub fn length(&self) -> f64 {
+        f64::sqrt(self.x*self.x + self.y*self.y)
+    }
+
+    pub fn normalize(&mut self) -> Vec2 {
+        let len_inv = 1.0 / self.length();
+        self.x *= len_inv;
+        self.y *= len_inv;
+        self.clone()
+    }
+
+    pub fn dot(v1: Vec2, v2: Vec2) -> f64 {
+        v1.x() * v2.x() + v1.y() * v2.y()
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Conversion from other types
+// ----------------------------------------------------------------------------
+impl From<f64> for Vec2 {
+    fn from(item: f64) -> Self {
+        Vec2 {
+            x: item, y: item
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Operator overloading
+// ----------------------------------------------------------------------------
+impl ops::Neg for Vec2 {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            x: -self.x,
+            y: -self.y
+        }
+    }
+}
+
+impl ops::Add<Vec2> for Vec2 {
+    type Output = Vec2;
+
+    fn add(self, _rhs: Vec2) -> Self::Output {
+        Vec2 {
+            x: self.x + _rhs.x,
+            y: self.y + _rhs.y
+        }
+    }
+}
+
+impl ops::AddAssign<Vec2> for Vec2 {
+    fn add_assign(&mut self, other: Self) {
+        *self = Self {
+            x: self.x + other.x,
+            y: self.y + other.y
+        };
+    }
+}
+
+impl ops::AddAssign<f64> for Vec2 {
+    fn add_assign(&mut self, other: f64) {
+        *self = Self {
+            x: self.x + other,
+            y: self.y + other
+        };
+    }
+}
+
+impl ops::Sub<Vec2> for Vec2 {
+    type Output = Vec2;
+
+    fn sub(self, _rhs: Vec2) -> Self::Output {
+        Vec2 {
+            x: self.x - _rhs.x,
+            y: self.y - _rhs.y
+        }
+    }
+}
+
+impl ops::SubAssign<f64> for Vec2 {
+    fn sub_assign(&mut self, other: f64) {
+        *self = Self {
+            x: self.x - other,
+            y: self.y - other
+        };
+    }
+}
+
+impl ops::SubAssign<Vec2> for Vec2 {
+    fn sub_assign(&mut self, other: Vec2) {
+        *self = Self {
+            x: self.x - other.x,
+            y: self.y - other.y
+        };
+    }
+}
+
+impl ops::Mul<f64> for Vec2 {
+    type Output = Vec2;
+
+    fn mul(self, _rhs: f64) -> Self::Output {
+        Vec2 {
+            x: self.x * _rhs,
+            y: self.y * _rhs
+        }
+    }
+}
+
+impl ops::Mul<Vec2> for f64 {
+    type Output = Vec2;
+
+    fn mul(self, _rhs: Vec2) -> Self::Output {
+        Vec2 {
+            x: self * _rhs.x,
+            y: self * _rhs.y
+        }
+    }
+}
+
+impl ops::MulAssign<f64> for Vec2 {
+    fn mul_assign(&mut self, other: f64) {
+        *self = Self {
+            x: self.x * other,
+            y: self.y * other
+        };
+    }
+}
+
+
+impl ops::DivAssign<f64> for Vec2 {
+    fn div_assign(&mut self, other: f64) {
+        *self = Self {
+            x: self.x / other,
+            y: self.y / other
+        };
+    }
+}
