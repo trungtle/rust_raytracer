@@ -5,6 +5,7 @@ use std::path::Path;
 use crate::core::Spectrum;
 use crate::math::Vec3;
 
+#[derive(Clone)]
 pub struct Film {
     width: u32,
     height: u32,

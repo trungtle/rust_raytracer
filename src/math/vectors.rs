@@ -25,12 +25,25 @@ impl Vec3 {
         f64::sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
     }
 
-    pub fn normalize(&mut self) -> Vec3 {
+    pub fn length2(&self) -> f64 {
+        self.x*self.x + self.y*self.y + self.z*self.z
+    }
+
+    pub fn normalize(&self) -> Vec3 {
         let len_inv = 1.0 / self.length();
-        self.x *= len_inv;
-        self.y *= len_inv;
-        self.z *= len_inv;
-        self.clone()
+        Vec3 {
+            x: self.x * len_inv,
+            y: self.y * len_inv,
+            z: self.z * len_inv
+        }
+    }
+
+    pub fn clamp(&self, min: f64, max: f64) -> Vec3 {
+        Vec3 {
+            x: self.x.clamp(min, max),
+            y: self.y.clamp(min, max),
+            z: self.z.clamp(min, max)
+        }
     }
 
     pub fn dot(v1: Vec3, v2: Vec3) -> f64 {
@@ -160,6 +173,18 @@ impl ops::Mul<Vec3> for f64 {
     }
 }
 
+impl ops::Mul<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, _rhs: Vec3) -> Self::Output {
+        Vec3 {
+            x: self.x * _rhs.x,
+            y: self.y * _rhs.y,
+            z: self.z * _rhs.z,
+        }
+    }
+}
+
 impl ops::MulAssign<f64> for Vec3 {
     fn mul_assign(&mut self, other: f64) {
         *self = Self {
@@ -205,11 +230,16 @@ impl Vec2 {
         f64::sqrt(self.x*self.x + self.y*self.y)
     }
 
-    pub fn normalize(&mut self) -> Vec2 {
+    pub fn length2(&self) -> f64 {
+        self.x*self.x + self.y*self.y
+    }
+
+    pub fn normalize(&self) -> Vec2 {
         let len_inv = 1.0 / self.length();
-        self.x *= len_inv;
-        self.y *= len_inv;
-        self.clone()
+        Vec2 {
+            x: self.x * len_inv,
+            y: self.y * len_inv
+        }
     }
 
     pub fn dot(v1: Vec2, v2: Vec2) -> f64 {

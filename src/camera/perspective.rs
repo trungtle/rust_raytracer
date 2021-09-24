@@ -10,6 +10,7 @@ use crate::math::{
 };
 use crate::ray::Ray;
 
+#[derive(Clone)]
 pub struct PerspectiveCamera {
     width: u32, height: u32,
     eye: Vec3,
@@ -32,7 +33,7 @@ pub struct PerspectiveCamera {
 impl PerspectiveCamera {
     pub fn new(width: u32, height: u32) -> Self {
         let eye = Vec3::from(0.); 
-        let look_at = Vec3::new(0.,0.,10.);
+        let look_at = Vec3::new(0.,0.,-10.);
         let focus_dist = (eye - look_at).length();
         let aperture = 0.02;
         let vfov = 40.;
@@ -43,7 +44,7 @@ impl PerspectiveCamera {
         let half_width = half_height * aspect;
 
         const WORLD_UP: Vec3 = Vec3 {x: 0.,y: 1.,z: 0.};
-        let forward = (eye - look_at).normalize();
+        let forward = (look_at - eye).normalize();
         let right = Vec3::cross(WORLD_UP, forward);
         let up = Vec3::cross(forward, right);
 

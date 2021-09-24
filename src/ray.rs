@@ -6,7 +6,7 @@ pub struct Ray {
 }
 
 impl Ray {
-    pub fn new(origin: Vec3, mut d: Vec3) -> Self {
+    pub fn new(origin: Vec3, d: Vec3) -> Self {
         Self {
             origin,
             direction: d.normalize()
