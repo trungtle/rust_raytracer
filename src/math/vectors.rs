@@ -206,6 +206,18 @@ impl ops::DivAssign<f64> for Vec3 {
     }
 }
 
+impl std::iter::Sum for Vec3 {
+    fn sum<I>(iter: I) -> Self
+        where
+        I: Iterator<Item = Self>,
+    {
+        iter.fold(Self { x: 0.0, y: 0.0, z: 0.0 }, |a, b| Self {
+            x: a.x + b.x,
+            y: a.y + b.y,
+            z: a.z + b.z
+        })
+    }
+}
 
 // ----------------------------------------------------------------------------
 // VEC2

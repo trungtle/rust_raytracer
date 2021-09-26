@@ -1,9 +1,3 @@
-use std::{
-    sync::{Arc, Mutex},
-    thread,
-    time::Duration,
-};
-
 use crate::core::{
     Hitable,
     Scene,
@@ -39,7 +33,7 @@ impl DirectLightingIntegrator {
 
         let Spectrum::ColorRGB(mut acc_color) = Spectrum::ColorRGB(Vec3::from(0.));
 
-        let mut scatter_ray = ray;
+        let mut scatter_ray = ray.clone();
         
         for depth in 0..MAX_DEPTH {
             let hit = self.scene.hit(&scatter_ray);
@@ -76,9 +70,10 @@ impl DirectLightingIntegrator {
 }
 
 impl Integrator for DirectLightingIntegrator {
-    fn render(&mut self, view: &View) -> Spectrum {
-
+    fn render(&mut self, view: &View) {        
         let samples_per_pixel = 100;
+
+        // Single threaded version
         // for y in (0..view.height).rev() {
         //     for x in 0..view.width {
         //         let Spectrum::ColorRGB(mut total_spectrum) = Spectrum::ColorRGB(Vec3::from(0.));
@@ -94,48 +89,29 @@ impl Integrator for DirectLightingIntegrator {
         //         self.scene.persp_camera.write_to_film(x, y, Spectrum::ColorRGB(total_spectrum));
         //     }
         // }
+        
+        // Parallel version
+        let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.)); view.width as usize * view.height as usize];
 
-        (0..view.height*view.width).into_par_iter().for_each(|i| {
-            let x: u32 = i % view.width;
-            let y: u32 = i / view.width;
-            let Spectrum::ColorRGB(mut total_spectrum) = Spectrum::ColorRGB(Vec3::from(0.));
-            (0..samples_per_pixel).into_par_iter().for_each(|_sample| {
+        pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {            
+            let x: u32 = i as u32 % view.width;
+            let y: u32 = i as u32 / view.width;
+            
+            let mut total_spectrum = (0..samples_per_pixel).into_par_iter().
+            map(|_sample| {
                 let uv: Vec2 = Sampler::sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
+
                 let ray = self.scene.persp_camera.get_ray(&uv);
-                match self.li(&ray) {
-                    Spectrum::ColorRGB(li) => total_spectrum = li + total_spectrum
-                } 
-                
-            });
+                let Spectrum::ColorRGB(color) = self.li(&ray);
+                color
+            }).sum::<Vec3>();
+
             total_spectrum /= samples_per_pixel as f64;
-            self.scene.persp_camera.write_to_film(x, y, Spectrum::ColorRGB(total_spectrum));
+
+            *pixel = Spectrum::ColorRGB(total_spectrum);
         });
 
-        // Parallel version
-        // let mut handles = vec![];
-        // let shared_scene = Arc::new(self.scene);
-
-        // for thread_index in 0..(view.width * view.height) {
-        //     let shared_scene = Arc::clone(&shared_scene);
-        //     let handle = thread::spawn(move || {
-                
-        //         let Spectrum::ColorRGB(mut total_spectrum) = Spectrum::ColorRGB(Vec3::from(0.));
-        //         for _ in 0..samples_per_pixel {
-        //             let x = thread_index % view.width;
-        //             let y = thread_index / view.width;
-        //             let uv: Vec2 = Sampler::sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
-                    
-        //             let mut ray = shared_scene.persp_camera.get_ray(&uv);
-        //             let li = self.li(&mut ray);
-        //             match li {
-        //                 Spectrum::ColorRGB(li) => total_spectrum = li + total_spectrum
-        //             }    
-        //         }
-        //     });
-        //     handles.push(handle);
-        // }
-        
+        self.scene.persp_camera.set_pixels(pixels);        
         self.scene.persp_camera.write_film_to_file();
-        Spectrum::ColorRGB(Vec3::from(0.))
     }
 }

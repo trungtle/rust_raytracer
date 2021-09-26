@@ -1,5 +1,4 @@
 use crate::core::scene::SurfaceInteraction;
-use crate::math::{Sampler};
 use crate::ray::Ray;
 
 pub struct LambertianMat {
@@ -7,7 +6,7 @@ pub struct LambertianMat {
 }
 
 impl super::Material for LambertianMat {
-    fn scatter(ray: &Ray, surface: &SurfaceInteraction) -> super::ScatterResult {
+    fn scatter(_ray: &Ray, surface: &SurfaceInteraction) -> super::ScatterResult {
 
         // Scatter toward a random point inside a unit sphere tangent to the point of intersection.
 		// vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();

@@ -28,6 +28,10 @@ impl Film {
         self.pixels[index] = color;
     }
 
+    pub fn set_pixels(&mut self, pixels: Vec<Spectrum>) {
+        self.pixels = pixels;
+    }
+
     pub fn write_image(&self) {
         let path_string = format!("output/{}.bmp", self.file_name);
         let path = Path::new(&path_string);

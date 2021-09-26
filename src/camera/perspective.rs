@@ -76,8 +76,12 @@ impl PerspectiveCamera {
         Ray::new(self.eye + offset, self.lower_left + uv.x * self.horizontal + uv.y * self.vertical - self.eye - offset)
     }
 
-    pub fn write_to_film(&mut self, x:u32, y:u32, color: Spectrum) {
+    pub fn set_pixel(&mut self, x:u32, y:u32, color: Spectrum) {
         self.film.set_pixel(x, y, color);
+    }
+
+    pub fn set_pixels(&mut self, pixels: Vec<Spectrum> ) {
+        self.film.set_pixels(pixels);
     }
 
     pub fn write_film_to_file(&mut self) {

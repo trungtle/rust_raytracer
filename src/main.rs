@@ -6,6 +6,10 @@ pub mod math;
 pub mod ray;
 pub mod shapes;
 
+use std::{
+    time::{Instant}
+};
+
 use crate::core::{
     Scene,
     View,
@@ -20,8 +24,8 @@ use crate::integrators::{DirectLightingIntegrator, Integrator};
 
 fn main() {
 
-    const SCREEN_WIDTH: u32 = 50;
-    const SCREEN_HEIGHT: u32 = 50;
+    const SCREEN_WIDTH: u32 = 800;
+    const SCREEN_HEIGHT: u32 = 800;
 
     // Create new camera
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -33,5 +37,9 @@ fn main() {
 
     let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT);
     let mut integrator = DirectLightingIntegrator::new(scene);
+
+    let start = Instant::now();
     integrator.render(&view);
+    let duration = start.elapsed();
+    println!("Render time: {:?}", duration);
 }
