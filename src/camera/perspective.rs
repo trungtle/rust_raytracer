@@ -31,9 +31,8 @@ pub struct PerspectiveCamera {
 }
 
 impl PerspectiveCamera {
-    pub fn new(width: u32, height: u32) -> Self {
-        let eye = Vec3::from(0.); 
-        let look_at = Vec3::new(0.,0.,-10.);
+    pub fn new(width: u32, height: u32, eye: Vec3, look_at: Vec3) -> Self {
+        let eye = eye; 
         let focus_dist = (eye - look_at).length();
         let aperture = 0.02;
         let vfov = 40.;

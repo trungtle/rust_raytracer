@@ -1,7 +1,7 @@
-mod lambertian;
+mod matte;
 mod pdf;
 
-pub use lambertian::LambertianMat as LambertianMat;
+pub use matte::MatteMaterial as MatteMaterial;
 pub use pdf::Pdf as Pdf;
 pub use pdf::UniformPdf as UniformPdf;
 

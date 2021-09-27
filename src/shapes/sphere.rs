@@ -65,6 +65,7 @@ impl Hitable for Sphere {
 				intersect.t = t;
 				intersect.hit_point = ray.point_at(t);
 				intersect.hit_normal = self.normal_at(&intersect.hit_point);
+                intersect.hit_uv = self.uv_at(&intersect.hit_point);
 			} else {
                 let t = (-b + f64::sqrt(discriminant)) / (2. * a);
                 if t > T_MIN && t < T_MAX
@@ -72,6 +73,7 @@ impl Hitable for Sphere {
                     intersect.t = t;
                     intersect.hit_point = ray.point_at(t);
                     intersect.hit_normal = self.normal_at(&intersect.hit_point);
+                    intersect.hit_uv = self.uv_at(&intersect.hit_point);
                 }    
             }
 		}

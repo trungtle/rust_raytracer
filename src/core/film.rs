@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
@@ -33,7 +34,9 @@ impl Film {
     }
 
     pub fn write_image(&self) {
-        let path_string = format!("output/{}.bmp", self.file_name);
+        let now: DateTime<Utc> = Utc::now();
+        println!("UTC now is: {}", now);
+        let path_string = format!("output/{}-{}.ppm", self.file_name,now.format("%v-%H-%M-%S"));
         let path = Path::new(&path_string);
         let display = path.display();
 

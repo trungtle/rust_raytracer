@@ -1,4 +1,5 @@
 use crate::camera::PerspectiveCamera;
+use crate::materials::Material;
 use crate::math::{Vec2, Vec3};
 use crate::ray::Ray;
 
@@ -11,11 +12,11 @@ pub trait Shape {
     fn uv_at(&self, _point: &Vec3) -> Vec2 { Vec2::from(0.) }
 }
 
-pub trait HitableShape: Hitable + Shape + Send + Sync {}
-impl<T: Hitable + Shape + Send + Sync> HitableShape for T {}
+pub trait SceneObject: Hitable + Shape + Send + Sync {}
+impl<T: Hitable + Shape + Send + Sync> SceneObject for T {}
 
 pub struct Scene {
-    drawables: Vec<Box<dyn HitableShape>>,
+    drawables: Vec<Box<dyn SceneObject>>,
     pub persp_camera: PerspectiveCamera,
 }
 
@@ -27,7 +28,7 @@ impl Scene {
         }
     }
 
-    pub fn add(&mut self, drawable: Box<dyn HitableShape>) {
+    pub fn add(&mut self, drawable: Box<dyn SceneObject>) {
         self.drawables.push(drawable);
     }
 }
@@ -51,7 +52,8 @@ impl Hitable for Scene {
 pub struct SurfaceInteraction {    
     pub t: f64,
     pub hit_point: Vec3,
-    pub hit_normal: Vec3
+    pub hit_normal: Vec3,
+    pub hit_uv: Vec2
 }
 
 impl SurfaceInteraction {
@@ -59,7 +61,8 @@ impl SurfaceInteraction {
         Self {
             t: -1.,
             hit_point: Vec3::from(0.),
-            hit_normal: Vec3::from(0.)
+            hit_normal: Vec3::from(0.),
+            hit_uv: Vec2::from(0.)
         }
     }
 }
