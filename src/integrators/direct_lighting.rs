@@ -1,3 +1,5 @@
+extern crate pbr;
+
 use crate::core::{
     Hitable,
     Scene,
@@ -14,6 +16,7 @@ use crate::math:: {
     Vec2,
     Vec3
 };
+
 use crate::ray::Ray;
 use rayon::prelude::*;
 
@@ -91,12 +94,12 @@ impl Integrator for DirectLightingIntegrator {
         // }
         
         // Parallel version
-        let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.)); view.width as usize * view.height as usize];
-
+        let num_pixels = view.width as usize * view.height as usize;
+        let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.)); num_pixels];
+        
         pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {            
             let x: u32 = i as u32 % view.width;
             let y: u32 = i as u32 / view.width;
-            
             let mut total_spectrum = (0..samples_per_pixel).into_par_iter().
             map(|_sample| {
                 let uv: Vec2 = Sampler::sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
@@ -107,7 +110,6 @@ impl Integrator for DirectLightingIntegrator {
             }).sum::<Vec3>();
 
             total_spectrum /= samples_per_pixel as f64;
-
             *pixel = Spectrum::ColorRGB(total_spectrum);
         });
 

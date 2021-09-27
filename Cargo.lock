@@ -148,6 +148,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "pbr"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff5751d87f7c00ae6403eb1fcbba229b9c76c9a30de8c1cf87182177b168cea2"
+dependencies = [
+ "crossbeam-channel",
+ "libc",
+ "time",
+ "winapi",
+]
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -240,6 +252,7 @@ name = "tl_raytracer"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "pbr",
  "rand",
  "rayon",
 ]
