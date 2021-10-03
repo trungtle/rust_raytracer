@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use crate::core::interaction::SurfaceInteraction;
+use crate::core::spectrum::Spectrum;
+use crate::core::texture::Texture;
 use crate::ray::Ray;
-use crate::core::Spectrum;
-use crate::textures::Texture;
 
 pub struct MatteMaterial {
     pub kd: Arc<dyn Texture<Spectrum> + Sync + Send>,

@@ -12,22 +12,22 @@ use std::{
 };
 
 use crate::core::{
-    Scene,
-    View,
+    scene::Scene,
+    view::View,
 };
 use crate::shapes::{
-    Sphere,
-    Triangle,
+    sphere::Sphere,
+    triangle::Triangle,
 };
 
-use crate::math::Vec3;
-use crate::cameras::PerspectiveCamera;
-use crate::integrators::{DirectLightingIntegrator, Integrator};
+use crate::math::vectors::Vec3;
+use crate::cameras::perspective::PerspectiveCamera;
+use crate::integrators::direct_lighting::DirectLightingIntegrator;
 
 fn main() {
 
-    const SCREEN_WIDTH: u32 = 100;
-    const SCREEN_HEIGHT: u32 = 100;
+    const SCREEN_WIDTH: u32 = 600;
+    const SCREEN_HEIGHT: u32 = 600;
 
     // Create new camera
     let cam_eye = Vec3::new(0.,0.,-10.);

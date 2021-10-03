@@ -3,8 +3,8 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
-use crate::core::Spectrum;
-use crate::math::Vec3;
+use crate::core::spectrum::Spectrum;
+use crate::math::vectors::Vec3;
 
 #[derive(Clone)]
 pub struct Film {

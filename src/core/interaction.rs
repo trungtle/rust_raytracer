@@ -1,4 +1,4 @@
-use crate::math::{Vec2, Vec3};
+use crate::math::vectors::{Vec2, Vec3};
 
 pub struct SurfaceInteraction {    
     pub t: f64,

@@ -1,5 +1,6 @@
-use crate::math::{Sampler, Vec3};
-use crate::materials::ONB;
+use crate::core::geometry::ONB;
+use crate::core::sampler::Sampler;
+use crate::math::vectors::Vec3;
 
 pub trait Pdf {
     fn value(direction: &Vec3) -> f64;

@@ -1,7 +1,7 @@
-use crate::cameras::PerspectiveCamera;
+use crate::cameras::perspective::PerspectiveCamera;
 use crate::core::interaction::SurfaceInteraction;
-use crate::materials::MatteMaterial;
-use crate::math::{Vec2, Vec3};
+use crate::materials::matte::MatteMaterial;
+use crate::math::vectors::{Vec2, Vec3};
 use crate::ray::Ray;
 
 pub trait Hitable {

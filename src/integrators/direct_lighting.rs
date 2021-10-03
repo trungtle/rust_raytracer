@@ -1,18 +1,18 @@
 extern crate pbr;
 
 use crate::core::{
-    Hitable,
-    Scene,
-    Spectrum,
-    View
+    sampler::Sampler,
+    scene::Hitable,
+    scene::Scene,
+    spectrum::Spectrum,
+    view::View
 };
-use crate::integrators::Integrator;
+
 use crate::materials::{
-    Pdf,
-    UniformPdf
+    pdf::Pdf,
+    pdf::UniformPdf
 };
-use crate::math:: {
-    Sampler,
+use crate::math::vectors::{
     Vec2,
     Vec3
 };
@@ -72,8 +72,8 @@ impl DirectLightingIntegrator {
     }
 }
 
-impl Integrator for DirectLightingIntegrator {
-    fn render(&mut self, view: &View) {        
+impl DirectLightingIntegrator {
+    pub fn render(&mut self, view: &View) {        
         let samples_per_pixel = 100;
 
         // Single threaded version

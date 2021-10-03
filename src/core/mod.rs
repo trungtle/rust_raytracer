@@ -1,14 +1,9 @@
 pub mod film;
+pub mod geometry;
 pub mod interaction;
+pub mod sampler;
 pub mod scene;
+pub mod shape;
 pub mod spectrum;
+pub mod texture;
 pub mod view;
-
-pub use film::Film as Film;
-pub use spectrum::Spectrum as Spectrum;
-pub use view::View as View;
-pub use scene::{
-    Hitable as Hitable,
-    Scene as Scene,
-};
-

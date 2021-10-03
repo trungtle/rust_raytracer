@@ -1,10 +1,10 @@
 use std::f64::consts::PI;
 use crate::core::{
-    Film,
-    Spectrum,
+    film::Film,
+    sampler::Sampler,
+    spectrum::Spectrum,
 };
-use crate::math::{ 
-    Sampler,
+use crate::math::vectors::{ 
     Vec2,
     Vec3
 };

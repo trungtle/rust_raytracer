@@ -1,4 +1,4 @@
-use crate::math::Vec3;
+use crate::math::vectors::Vec3;
 
 #[derive(Clone, Debug)]
 pub enum Spectrum {

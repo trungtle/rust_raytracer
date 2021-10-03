@@ -5,7 +5,7 @@ use crate::core::scene::{
     Hitable,
     Shape
 };
-use crate::math::{Vec2, Vec3};
+use crate::math::vectors::{Vec2, Vec3};
 use crate::ray::Ray;
 
 pub struct Sphere {
