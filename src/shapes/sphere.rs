@@ -1,9 +1,9 @@
 use std::f64::consts::PI;
 
+use crate::core::interaction::SurfaceInteraction;
 use crate::core::scene::{
     Hitable,
-    Shape,
-    SurfaceInteraction
+    Shape
 };
 use crate::math::{Vec2, Vec3};
 use crate::ray::Ray;

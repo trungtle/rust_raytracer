@@ -1,18 +1,11 @@
-mod matte;
-mod pdf;
+pub mod matte;
+pub mod pdf;
 
 pub use matte::MatteMaterial as MatteMaterial;
 pub use pdf::Pdf as Pdf;
 pub use pdf::UniformPdf as UniformPdf;
 
-use crate::core::scene::SurfaceInteraction;
 use crate::math::Vec3;
-use crate::ray::Ray;
-
-pub struct ScatterResult(bool, Ray);
-pub trait Material {
-    fn scatter(ray: &Ray, surface: &SurfaceInteraction) -> ScatterResult;
-}
 
 // Orthonormal basics
 pub struct ONB {

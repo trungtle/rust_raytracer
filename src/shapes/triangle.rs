@@ -1,7 +1,7 @@
+use crate::core::interaction::SurfaceInteraction;
 use crate::core::scene::{
     Hitable,
     Shape,
-    SurfaceInteraction
 };
 use crate::math::{Vec2, Vec3};
 use crate::ray::Ray;

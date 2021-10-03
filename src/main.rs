@@ -1,10 +1,11 @@
-pub mod camera;
+pub mod cameras;
 pub mod core;
 pub mod integrators;
 pub mod materials;
 pub mod math;
 pub mod ray;
 pub mod shapes;
+pub mod textures;
 
 use std::{
     time::{Instant}
@@ -20,7 +21,7 @@ use crate::shapes::{
 };
 
 use crate::math::Vec3;
-use crate::camera::PerspectiveCamera;
+use crate::cameras::PerspectiveCamera;
 use crate::integrators::{DirectLightingIntegrator, Integrator};
 
 fn main() {

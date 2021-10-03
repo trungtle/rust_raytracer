@@ -1,12 +1,17 @@
-use crate::core::scene::SurfaceInteraction;
+use std::sync::Arc;
+
+use crate::core::interaction::SurfaceInteraction;
 use crate::ray::Ray;
+use crate::core::Spectrum;
+use crate::textures::Texture;
 
 pub struct MatteMaterial {
-
+    pub kd: Arc<dyn Texture<Spectrum> + Sync + Send>,
+    pub sigma: Arc<dyn Texture<f64> + Sync + Send>
 }
 
-impl super::Material for MatteMaterial {
-    fn scatter(_ray: &Ray, surface: &SurfaceInteraction) -> super::ScatterResult {
+impl MatteMaterial{
+    fn scatter(_ray: &Ray, surface: &SurfaceInteraction) {
 
         // Scatter toward a random point inside a unit sphere tangent to the point of intersection.
 		// vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
@@ -21,7 +26,5 @@ impl super::Material for MatteMaterial {
         // let uvw: super::ONB = ;
         // uvw.build_from(&surface.hit_normal);
         // let direction = uvw.local(&Sampler::sample_cosine_direction());
-
-        super::ScatterResult(true, Ray::new(surface.hit_point, crate::math::Vec3::from(1.)))
     }
 }
