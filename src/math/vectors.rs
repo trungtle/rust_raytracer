@@ -21,6 +21,14 @@ impl Vec3 {
     pub fn g(&self) -> f64 { self.y }
     pub fn b(&self) -> f64 { self.z }
 
+    pub fn sqrt(v: Vec3) -> Vec3 {
+        Vec3::new(
+            f64::sqrt(v.x),
+            f64::sqrt(v.y),
+            f64::sqrt(v.z)
+        )
+    }
+
     pub fn length(&self) -> f64 {
         f64::sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
     }

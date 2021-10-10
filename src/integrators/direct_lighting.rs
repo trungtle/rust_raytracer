@@ -1,8 +1,11 @@
-extern crate pbr;
+use rayon::prelude::*;
 
 use crate::core::{
+    interaction::SurfaceInteraction,
+    material::Material,
+    primitive::Primitive,
+    ray::Ray,
     sampler::Sampler,
-    scene::Hitable,
     scene::Scene,
     spectrum::Spectrum,
     view::View
@@ -12,13 +15,7 @@ use crate::materials::{
     pdf::Pdf,
     pdf::UniformPdf
 };
-use crate::math::vectors::{
-    Vec2,
-    Vec3
-};
-
-use crate::ray::Ray;
-use rayon::prelude::*;
+use crate::math::vectors::{Vec2,Vec3};
 
 pub struct DirectLightingIntegrator {
     pub scene: Scene,
@@ -34,34 +31,57 @@ impl DirectLightingIntegrator {
     fn li(&self, ray: &Ray) -> Spectrum {
         const MAX_DEPTH: u32 = 10;
 
-        let Spectrum::ColorRGB(mut acc_color) = Spectrum::ColorRGB(Vec3::from(0.));
-
+        let mut acc_color = Spectrum::ColorRGB(Vec3::from(0.));
         let mut scatter_ray = ray.clone();
         
         for depth in 0..MAX_DEPTH {
-            let hit = self.scene.hit(&scatter_ray);
-            if hit.t > 0. {
-                let Spectrum::ColorRGB(bounce_color) = Spectrum::ColorRGB(Vec3::new(0.5, 0.5, 0.5));
-                let uniform_pdf = UniformPdf::new(&hit.hit_normal);
+            let mut isect = SurfaceInteraction::new();
+            let hit = self.scene.intersect(&scatter_ray, &mut isect);
+            if hit {
+                let mut bounce_color = Spectrum::ColorRGB(Vec3::new(0.5,0.5,0.5));
+
+                match isect.hit_primitive {
+                    Some(primitive) => {
+                        match *primitive {
+                            Primitive::Shape(primitive) => {
+                                match primitive.material {
+                                    Some(material) => {
+                                        match *material {
+                                            Material::Constant(material) => {
+                                                bounce_color = material.get_value().clone();
+                                            },
+                                            Material::Matte(material) => {
+
+                                            }
+                                        }
+                                    }
+                                    None => {}
+                                }
+                            }                            
+                        }
+                    },
+                    None => {}
+                }
+                let uniform_pdf = UniformPdf::new(&isect.hit_normal);
                 
                 let new_direction = uniform_pdf.sample_wi();
-                scatter_ray.origin = hit.hit_point;
+                scatter_ray.origin = isect.hit_point;
                 scatter_ray.direction = new_direction.normalize();
 
-                let scattering_pdf = f64::abs(Vec3::dot(hit.hit_normal, scatter_ray.direction));
+                let scattering_pdf = f64::abs(Vec3::dot(isect.hit_normal, scatter_ray.direction));
 
                 if depth == 0 {
                     acc_color = bounce_color;
                 }
                 else {
-                    acc_color = scattering_pdf * acc_color * bounce_color;
+                    acc_color = acc_color * bounce_color * scattering_pdf;
                 }
                 
             } else {
                 let t = 0.5 * ray.direction.y + 1.0;
                 let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.5, 0.7, 1.);
                 if depth == 0 {
-                    acc_color = sky_color;
+                    acc_color = Spectrum::ColorRGB(sky_color);
                 } else {
                     acc_color = acc_color * sky_color;
                 }
@@ -110,6 +130,7 @@ impl DirectLightingIntegrator {
             }).sum::<Vec3>();
 
             total_spectrum /= samples_per_pixel as f64;
+            total_spectrum = Vec3::sqrt(total_spectrum);
             *pixel = Spectrum::ColorRGB(total_spectrum);
         });
 

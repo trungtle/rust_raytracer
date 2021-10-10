@@ -1,13 +1,10 @@
 use std::f64::consts::PI;
 
 use crate::core::interaction::SurfaceInteraction;
-use crate::core::scene::{
-    Hitable,
-    Shape
-};
+use crate::core::ray::Ray;
 use crate::math::vectors::{Vec2, Vec3};
-use crate::ray::Ray;
 
+#[derive(Copy, Clone)]
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f64,
@@ -22,25 +19,21 @@ impl Sphere {
             radius_sq: radius * radius,
         }
     }
-}
 
-impl Shape for Sphere {
-    fn normal_at(&self, point: &Vec3) -> Vec3 {
+    pub fn normal_at(&self, point: &Vec3) -> Vec3 {
         (*point - self.center).normalize()
     }
 
     // Get UV for a unit sphere
-    fn uv_at(&self, point: &Vec3) -> Vec2 {
+    pub fn uv_at(&self, point: &Vec3) -> Vec2 {
 		let phi = f64::atan2(point.z, point.x);
 		let theta = f64::asin(point.y);
 		let u = 1. - (phi + PI) / (2. * PI);
 		let v = (theta + PI / 2.) / PI;
 		Vec2 {x: u, y: v}
     }
-}
 
-impl Hitable for Sphere {
-    fn hit(&self, ray: &Ray) -> SurfaceInteraction {
+    pub fn intersect(&self, ray: &Ray, isect: &mut SurfaceInteraction) -> bool {
 
     	// Sphere equation
 		// (x - cx)^2 + (y - cy)^2 + (z - cz)^2 = R^2
@@ -49,7 +42,6 @@ impl Hitable for Sphere {
 		// Solve for this equation using quadratic formula
 		// t = -b +/- sqrt(b*b - 4*a*c) / 2 * a
 
-        let mut intersect = SurfaceInteraction::new();
 		let oc = ray.origin - self.center;
 		let a = Vec3::dot(ray.direction, ray.direction);
 		let b = 2. * Vec3::dot(ray.direction, oc);
@@ -62,21 +54,23 @@ impl Hitable for Sphere {
 		if discriminant > 0. {
 			let t = (-b - f64::sqrt(discriminant)) / (2. * a);
 			if t > T_MIN && t < T_MAX {
-				intersect.t = t;
-				intersect.hit_point = ray.point_at(t);
-				intersect.hit_normal = self.normal_at(&intersect.hit_point);
-                intersect.hit_uv = self.uv_at(&intersect.hit_point);
+				isect.t = t;
+				isect.hit_point = ray.point_at(t);
+				isect.hit_normal = self.normal_at(&isect.hit_point);
+                isect.hit_uv = self.uv_at(&isect.hit_point);
+                return true;
 			} else {
                 let t = (-b + f64::sqrt(discriminant)) / (2. * a);
                 if t > T_MIN && t < T_MAX
                 {
-                    intersect.t = t;
-                    intersect.hit_point = ray.point_at(t);
-                    intersect.hit_normal = self.normal_at(&intersect.hit_point);
-                    intersect.hit_uv = self.uv_at(&intersect.hit_point);
+                    isect.t = t;
+                    isect.hit_point = ray.point_at(t);
+                    isect.hit_normal = self.normal_at(&isect.hit_point);
+                    isect.hit_uv = self.uv_at(&isect.hit_point);
+                    return true;
                 }    
             }
 		}
-        intersect
+        return false;
     }
 }

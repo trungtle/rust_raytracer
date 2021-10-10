@@ -1,51 +1,45 @@
 use crate::cameras::perspective::PerspectiveCamera;
+use crate::core::primitive::Primitive;
 use crate::core::interaction::SurfaceInteraction;
-use crate::materials::matte::MatteMaterial;
-use crate::math::vectors::{Vec2, Vec3};
-use crate::ray::Ray;
-
-pub trait Hitable {
-    fn hit(&self, ray: &Ray) -> SurfaceInteraction;
-}
-
-pub trait Shape {
-    fn normal_at(&self, _point: &Vec3) -> Vec3 { Vec3::from(0.) }
-    fn uv_at(&self, _point: &Vec3) -> Vec2 { Vec2::from(0.) }
-}
-
-pub trait SceneObject: Hitable + Shape + Send + Sync {}
-impl<T: Hitable + Shape + Send + Sync> SceneObject for T {}
+use crate::core::ray::Ray;
 
 pub struct Scene {
-    drawables: Vec<Box<dyn SceneObject>>,
+    primitives: Vec<Primitive>,
     pub persp_camera: PerspectiveCamera,
 }
 
 impl Scene {
     pub fn new(persp_camera: PerspectiveCamera) -> Self {
         Self {
-            drawables: Vec::new(),
+            primitives: Vec::new(),
             persp_camera
         }
     }
 
-    pub fn add(&mut self, drawable: Box<dyn SceneObject>) {
-        self.drawables.push(drawable);
+    pub fn add(&mut self, primitives: Primitive) {
+        self.primitives.push(primitives);
     }
 }
 
-impl Hitable for Scene {
-    fn hit(&self, ray: &Ray) -> SurfaceInteraction {
-
-        let mut closest_t = 99999.;
-        let mut closest_hit = SurfaceInteraction::new();
-        for drawable in self.drawables.iter() {
-            let hit = drawable.hit(&ray);
-            if hit.t > 0. && hit.t < closest_t {
-                closest_t = hit.t;
-                closest_hit = hit;
+impl Scene {
+    pub fn intersect(&self, ray: &Ray, closest_isect: &mut SurfaceInteraction) -> bool {
+        const MAX_T: f64 = 99999.;
+        let mut closest_t = MAX_T;
+        for primitive in self.primitives.iter() {
+            let mut isect = SurfaceInteraction::new();
+            let hit = primitive.intersect(&ray, &mut isect);
+            if hit && isect.t < closest_t{
+                closest_t = isect.t;
+                closest_isect.hit_normal = isect.hit_normal;
+                closest_isect.hit_point = isect.hit_point;
+                closest_isect.hit_uv = isect.hit_uv;
+                closest_isect.hit_primitive = Some(Box::new(primitive.clone())); 
             }
         }
-        closest_hit
+        if closest_t < MAX_T {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

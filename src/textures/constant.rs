@@ -1,6 +1,7 @@
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::texture::Texture;
 
+#[derive(Clone)]
 pub struct ConstantTexture<T> {
     pub value: T,
 }

@@ -1,17 +1,18 @@
 use std::sync::Arc;
 
 use crate::core::interaction::SurfaceInteraction;
+use crate::core::ray::Ray;
 use crate::core::spectrum::Spectrum;
 use crate::core::texture::Texture;
-use crate::ray::Ray;
 
+#[derive(Clone)]
 pub struct MatteMaterial {
-    pub kd: Arc<dyn Texture<Spectrum> + Sync + Send>,
-    pub sigma: Arc<dyn Texture<f64> + Sync + Send>
+    kd: Arc<dyn Texture<Spectrum> + Sync + Send>,
+    sigma: Arc<dyn Texture<f64> + Sync + Send>
 }
 
 impl MatteMaterial{
-    fn scatter(_ray: &Ray, surface: &SurfaceInteraction) {
+    pub fn scatter(_ray: &Ray, surface: &SurfaceInteraction) {
 
         // Scatter toward a random point inside a unit sphere tangent to the point of intersection.
 		// vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();

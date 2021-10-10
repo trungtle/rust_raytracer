@@ -1,9 +1,12 @@
 pub mod film;
 pub mod geometry;
 pub mod interaction;
+pub mod material;
+pub mod primitive;
 pub mod sampler;
-pub mod scene;
 pub mod shape;
+pub mod scene;
+pub mod ray;
 pub mod spectrum;
 pub mod texture;
 pub mod view;

@@ -1,3 +1,5 @@
+use crate::core::ray::Ray;
+use crate::math::vectors::Vec2;
 use crate::math::vectors::Vec3;
 
 pub struct Bounds3 {

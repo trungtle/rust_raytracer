@@ -1,6 +1,7 @@
 use std::f64::consts::PI;
 use crate::core::{
     film::Film,
+    ray::Ray,
     sampler::Sampler,
     spectrum::Spectrum,
 };
@@ -8,7 +9,6 @@ use crate::math::vectors::{
     Vec2,
     Vec3
 };
-use crate::ray::Ray;
 
 #[derive(Clone)]
 pub struct PerspectiveCamera {
