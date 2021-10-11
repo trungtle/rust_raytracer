@@ -54,6 +54,13 @@ fn main() {
     scene.add(
         Primitive::Shape(Box::new(
             ShapePrimitive::new(
+                Shape::Sphere(Sphere::new(Vec3::new(-1., 0., -1.), 0.5)),
+                Option::Some(
+                    Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 0.0))))))))));
+                
+    scene.add(
+        Primitive::Shape(Box::new(
+            ShapePrimitive::new(
                 Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
                 Option::None))));
             
