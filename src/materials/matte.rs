@@ -12,7 +12,7 @@ pub struct MatteMaterial {
 }
 
 impl MatteMaterial{
-    pub fn scatter(_ray: &Ray, surface: &SurfaceInteraction) {
+    pub fn scatter(_ray: &Ray, _surface: &SurfaceInteraction) {
 
         // Scatter toward a random point inside a unit sphere tangent to the point of intersection.
 		// vec3 newTarget = intersect.P + intersect.N + Sampler::RandomSampleInUnitSphere();
