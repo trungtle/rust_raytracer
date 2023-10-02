@@ -34,7 +34,7 @@ impl Mesh {
                 positions.push(Vec3::new(x, y, z));
             }
         }
-        
+
         // Indices
         if let Some(iter) = reader.read_indices() {
             for index in iter.into_u32() {
@@ -42,9 +42,6 @@ impl Mesh {
             }
         }
 
-        println!("Positions size {}", positions.len());
-        println!("Positions {:?}", positions);
-        println!("Indices {:?}", indices);
         Self {
             positions,
             indices
@@ -76,7 +73,7 @@ impl Mesh {
                 nearest_isect.hit_uv = isect.hit_uv;
             }
         }
-        
+
         isect.t = nearest_isect.t;
         isect.hit_point = nearest_isect.hit_point;
         isect.hit_normal = nearest_isect.hit_normal;
