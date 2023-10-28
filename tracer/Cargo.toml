@@ -1,0 +1,28 @@
+[package]
+name = "tracer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4.19"
+log = "0.4.14"
+pbr = "1.0.4"
+rand = "0.8.4"
+rayon = "1.5"
+env_logger = "0.10.0"
+pbrt4 = "0.2.0"
+
+[dependencies.gltf]
+version = "0.16"
+
+# The development profile, used for `cargo build`
+[profile.dev]
+opt-level = 0  # Controls the --opt-level the compiler builds with
+debug = true   # Controls whether the compiler passes `-g`
+
+# The release profile, used for `cargo build --release`
+[profile.release]
+opt-level = 3
+debug = false
