@@ -1,5 +1,4 @@
 use std::f64::consts::PI;
-use std::os::windows;
 
 use rayon::prelude::*;
 
@@ -14,10 +13,6 @@ use crate::core::{
     view::View
 };
 
-use crate::materials::{
-    pdf::Pdf,
-    pdf::UniformPdf
-};
 use crate::math::vectors::{Vec2,Vec3};
 
 pub struct DirectLightingIntegrator {
@@ -60,10 +55,14 @@ impl DirectLightingIntegrator {
                                 Some(material) => {
                                     match *material {
                                         Material::Constant(material) => {
-                                            material_color = material.get_value().clone();
+                                            material.scatter(&mut scatter_ray, &mut material_color, &isect.hit_normal);
                                         },
                                         Material::Matte(_material) => {
 
+                                        },
+                                        Material::Metal(material) => {
+                                            material_color = material.color.clone();
+                                            material.scatter(&mut scatter_ray, &mut material_color, &isect.hit_point, &isect.hit_normal);
                                         }
                                     }
                                 }
@@ -76,8 +75,9 @@ impl DirectLightingIntegrator {
             }
 
             // New ray
-            let uniform_pdf = UniformPdf::new(&isect.hit_normal);
-            scatter_ray.direction = uniform_pdf.sample_wi().normalize();
+            if scatter_ray.direction.near_zero() {
+                scatter_ray.direction = isect.hit_normal;
+            }
             scatter_ray.origin = isect.hit_point + scatter_ray.direction * 1e-3;
 
             let n_dot_l = f64::clamp(Vec3::dot(isect.hit_normal, scatter_ray.direction), 0., 1.);
@@ -92,7 +92,7 @@ impl DirectLightingIntegrator {
 impl DirectLightingIntegrator {
     pub fn render(&mut self, view: &View) {
         let samples_per_pixel = view.samples_per_pixel;
-        let single_thread = false;
+        let single_thread = true;
 
         let num_pixels = view.width as usize * view.height as usize;
         let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.)); num_pixels];

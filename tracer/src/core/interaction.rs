@@ -1,8 +1,7 @@
-use crate::core::material::Material;
 use crate::core::primitive::Primitive;
 use crate::math::vectors::{Vec2, Vec3};
 
-pub struct SurfaceInteraction {    
+pub struct SurfaceInteraction {
     pub t: f64,
     pub hit_point: Vec3,
     pub hit_normal: Vec3,

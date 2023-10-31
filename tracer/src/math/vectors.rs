@@ -65,6 +65,15 @@ impl Vec3 {
             z: v1.x() * v2.y() - v1.y() * v2.x()
         }
     }
+
+    pub fn near_zero(&self) -> bool {
+        let eps = 1e-8;
+        self.x.abs() < eps && self.y.abs() < eps && self.z.abs() < eps
+    }
+
+    pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+        return v - 2. * Vec3::dot(v, n) * n;
+    }
 }
 
 // ----------------------------------------------------------------------------

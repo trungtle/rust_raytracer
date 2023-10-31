@@ -8,6 +8,7 @@ pub mod shapes;
 pub mod textures;
 
 use env_logger;
+use materials::MetalMaterial;
 
 use std::{
     ffi::CString,
@@ -128,15 +129,29 @@ fn raytracing_weekend_scene() -> Scene
         ShapePrimitive::new(
             Shape::Sphere(Sphere::new(Vec3::new(0., 0., -1.), 0.5)),
             Option::Some(
-                Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.5, 0.5))))))))));
+                Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.2, 0.5))))))))));
+
+    scene.add(
+        Primitive::Shape(Box::new(
+            ShapePrimitive::new(
+                Shape::Sphere(Sphere::new(Vec3::new(1., 0., -1.), 0.5)),
+                Option::Some(
+                    Box::new(Material::Metal(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))))))));
+
+    scene.add(
+        Primitive::Shape(Box::new(
+            ShapePrimitive::new(
+                Shape::Sphere(Sphere::new(Vec3::new(-1., 0., -1.), 0.5)),
+                Option::Some(
+                    Box::new(Material::Metal(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))))))));
 
     // Ground
-    // scene.add(
-    //     Primitive::Shape(Box::new(
-    //         ShapePrimitive::new(
-    //             Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
-    //             Option::Some(
-    //                 Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.5, 0.5))))))))));
+    scene.add(
+        Primitive::Shape(Box::new(
+            ShapePrimitive::new(
+                Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
+                Option::Some(
+                    Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2))))))))));
 
     return scene;
 }
