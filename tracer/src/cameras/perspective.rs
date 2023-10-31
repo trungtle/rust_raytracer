@@ -5,7 +5,7 @@ use crate::core::{
     sampler::Sampler,
     spectrum::Spectrum,
 };
-use crate::math::vectors::{ 
+use crate::math::vectors::{
     Vec2,
     Vec3
 };
@@ -26,13 +26,12 @@ pub struct PerspectiveCamera {
     up: Vec3,
     forward: Vec3,
     right: Vec3,
-
     film: Film,
 }
 
 impl PerspectiveCamera {
     pub fn new(width: u32, height: u32, eye: Vec3, look_at: Vec3) -> Self {
-        let eye = eye; 
+        let eye = eye;
         let focus_dist = (eye - look_at).length();
         let aperture = 0.02;
         let vfov = 40.;
@@ -71,7 +70,7 @@ impl PerspectiveCamera {
 
     pub fn get_ray(&self, uv: &Vec2) -> Ray {
         let rp: Vec2 = self.aperture * Sampler::sample_from_unit_disk();
-        let offset: Vec3 = self.right * rp.x + self.up * rp.y;        
+        let offset: Vec3 = self.right * rp.x + self.up * rp.y;
         Ray::new(self.eye + offset, self.lower_left + uv.x * self.horizontal + uv.y * self.vertical - self.eye - offset)
     }
 

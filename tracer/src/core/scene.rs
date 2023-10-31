@@ -2,9 +2,12 @@ use crate::cameras::perspective::PerspectiveCamera;
 use crate::core::primitive::Primitive;
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
+use crate::core::spectrum::Spectrum;
+use crate::math::vectors::Vec3;
 
 pub struct Scene {
-    primitives: Vec<Primitive>,
+    pub primitives: Vec<Primitive>,
+    pub environment_light: fn(&Ray) -> Spectrum,
     pub persp_camera: PerspectiveCamera,
 }
 
@@ -12,6 +15,7 @@ impl Scene {
     pub fn new(persp_camera: PerspectiveCamera) -> Self {
         Self {
             primitives: Vec::new(),
+            environment_light: |ray| Spectrum::ColorRGB(Vec3::from(0.)),
             persp_camera
         }
     }
