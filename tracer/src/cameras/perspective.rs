@@ -69,7 +69,7 @@ impl PerspectiveCamera {
     }
 
     pub fn get_ray(&self, uv: &Vec2) -> Ray {
-        let rp: Vec2 = self.aperture * Sampler::sample_from_unit_disk();
+        let rp: Vec2 = self.aperture * Sampler::sample_unit_disk();
         let offset: Vec3 = self.right * rp.x + self.up * rp.y;
         Ray::new(self.eye + offset, self.lower_left + uv.x * self.horizontal + uv.y * self.vertical - self.eye - offset)
     }

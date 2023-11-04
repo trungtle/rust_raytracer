@@ -17,14 +17,20 @@ use std::{
     env
 };
 
+use crate::math::vectors:: {
+    Vec2,
+    Vec3
+};
+use crate::core::sampler;
 use crate::core::{
+    film::Film,
     primitive::Primitive,
     primitive::ShapePrimitive,
     material::Material,
     scene::Scene,
     shape::Shape,
     spectrum::Spectrum,
-    view::View,
+    view::View
 };
 use crate::materials::{
     constant::ConstantMaterial,
@@ -36,7 +42,6 @@ use crate::shapes::{
     triangle::Triangle,
 };
 
-use crate::math::vectors::Vec3;
 use crate::cameras::perspective::PerspectiveCamera;
 use crate::integrators::direct_lighting::DirectLightingIntegrator;
 
@@ -44,10 +49,30 @@ const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 800;
 const SAMPLES_PER_PIXEL: u8 = 100;
 
+fn pbrt4_scene() -> Scene
+{
+    let camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
+    let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
+
+    // Create new camera
+    let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
+    let mut scene = Scene::new(cam);
+
+    let path = "assets/pbrt4/pbrt-book/book.pbrt";
+    log::info!("Loading scene: {}", &path);
+    let pbrt_scene = pbrt4::Scene::from_file(&path).unwrap();
+
+    for shape in pbrt_scene.shapes {
+        log::info!("Shape {:#?}", shape);
+    }
+
+    return scene;
+}
+
 fn gltf_scene() -> Scene
 {
-    let camera_position: Vec3 = Vec3::new(0.,5.,-15.5);
-    let camera_lookat: Vec3 = Vec3::new(0.,0.,10.);
+    let camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
+    let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
 
     // Create new camera
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
@@ -99,7 +124,7 @@ fn gltf_scene() -> Scene
     for mesh in g_data.doc.meshes() {
         for primitive in mesh.primitives() {
             let mesh = Mesh::from_gltf(&primitive, &g_data);
-            let material = Option::Some(Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 0.0, 0.0))))));
+            let material = Option::Some(Box::new(Material::Metal(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))));
             let primitive = Primitive::Shape(Box::new(ShapePrimitive::new(Shape::Mesh(mesh), material)));
             scene.add(primitive);
         }
@@ -158,7 +183,7 @@ fn raytracing_weekend_scene() -> Scene
 
 fn furnace_test() -> Scene
 {
-    let reveal = false;
+    let reveal = true;
     let camera_position: Vec3 = Vec3::new(0.,5.,-15.5);
     let camera_lookat: Vec3 = Vec3::new(0.,0.,10.);
 
@@ -167,7 +192,7 @@ fn furnace_test() -> Scene
     let mut scene = Scene::new(cam);
 
     scene.environment_light = |_ray| -> Spectrum {
-        Spectrum::ColorRGB(Vec3 { x: 0.1, y: 0.1, z: 0.1 })
+        Spectrum::ColorRGB(Vec3 { x: 0.5, y: 0.5, z: 0.5 })
     };
 
     // scene.environment_light = |ray| -> Spectrum {
@@ -188,19 +213,58 @@ fn furnace_test() -> Scene
         scene.add(
             Primitive::Shape(Box::new(
                 ShapePrimitive::new(
-                    Shape::Sphere(Sphere::new(Vec3::new(3., 0., 0.), 1.)),
+                    Shape::Sphere(Sphere::new(Vec3::new(3., 0., -0.5), 1.)),
                     Option::Some(
-                        Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 0.0, 0.0))))))))));
+                        Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.8, 0.0, 0.0))))))))));
 
         scene.add(
             Primitive::Shape(Box::new(
                 ShapePrimitive::new(
-                    Shape::Sphere(Sphere::new(Vec3::new(0., 3., 0.), 1.)),
+                    Shape::Sphere(Sphere::new(Vec3::new(0., 3., -0.5), 1.)),
                     Option::Some(
-                        Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 0.0, 0.0))))))))));
+                        Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.8, 0.1, 0.02))))))))));
     }
 
     return scene;
+}
+
+fn render() {
+    // Initialize scene
+    let scene = raytracing_weekend_scene();
+
+    let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL);
+
+    let mut integrator = DirectLightingIntegrator::new(scene);
+
+    let start = Instant::now();
+    integrator.render(&view);
+    let duration = start.elapsed();
+    log::info!("Render time: {:?}", duration);
+}
+
+fn test_samplers() {
+    let mut film = Film::new(SCREEN_WIDTH, SCREEN_HEIGHT, "image");
+
+    let num_pixels = SCREEN_WIDTH as usize * SCREEN_HEIGHT as usize;
+    let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.0)); num_pixels];
+
+    let num_samples = 1000;
+    let color = Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 1.0));
+
+    for _i in 0..num_samples {
+        // Return a point ranges from -1 to 1
+        let random = sampler::Sampler::random_vec2_0_1();
+        let mut point = sampler::Sampler::sample_unit_disk_concentric(random);
+        point.x = point.x * film.width as f64 / 4.0 + film.width as f64 / 2.0;
+        point.y = point.y * film.height as f64 / 4.0 + film.height as f64 / 2.0;
+
+        let linear_coords: usize = (point.y as u32 * film.width + point.x as u32) as usize;
+        pixels[linear_coords] = color;
+    }
+    film.set_pixels(pixels);
+    film.write_image();
+
+    log::info!("Sampler test: {:?}", film.file_name);
 }
 
 fn main() {
@@ -212,14 +276,6 @@ fn main() {
 
     env_logger::init();
 
-    // Initialize scene
-    let scene = raytracing_weekend_scene();
-
-    let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL);
-    let mut integrator = DirectLightingIntegrator::new(scene);
-
-    let start = Instant::now();
-    integrator.render(&view);
-    let duration = start.elapsed();
-    println!("Render time: {:?}", duration);
+    render();
+    //test_samplers();
 }

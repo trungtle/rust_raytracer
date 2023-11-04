@@ -32,16 +32,20 @@ impl DirectLightingIntegrator {
     }
 
     fn li(&self, ray: &Ray) -> Spectrum {
-        const MAX_DEPTH: u32 = 5;
+        const MAX_DEPTH: u32 = 10;
 
-        let mut acc_color = Spectrum::ColorRGB(Vec3::from(1.0));
+        let mut acc_color = Spectrum::ColorRGB(Vec3::from(0.0));
         let mut scatter_ray = ray.clone();
 
-        for _depth in 0..MAX_DEPTH {
+        for depth in 0..MAX_DEPTH {
             let mut isect = SurfaceInteraction::new();
             let hit = self.scene.intersect(&scatter_ray, &mut isect);
             if !hit {
-                acc_color = acc_color * (self.scene.environment_light)(&ray);
+                if depth == 0 {
+                    acc_color = (self.scene.environment_light)(&ray);
+                } else {
+                    acc_color = acc_color * (self.scene.environment_light)(&ray);
+                }
                 break;
             }
 
@@ -75,15 +79,17 @@ impl DirectLightingIntegrator {
             }
 
             // New ray
-            if scatter_ray.direction.near_zero() {
-                scatter_ray.direction = isect.hit_normal;
-            }
+            scatter_ray.direction = scatter_ray.direction.normalize();
             scatter_ray.origin = isect.hit_point + scatter_ray.direction * 1e-3;
 
             let n_dot_l = f64::clamp(Vec3::dot(isect.hit_normal, scatter_ray.direction), 0., 1.);
 
             //acc_color = acc_color * self.brdf_lambert(material_color) * n_dot_l * 2.0 * PI;
-            acc_color = acc_color * material_color;
+            if depth == 0 {
+                acc_color = material_color;
+            } else {
+                acc_color = acc_color * material_color;
+            }
         }
         Spectrum::ColorRGB(acc_color.clamp(0., 1.))
     }
@@ -92,7 +98,7 @@ impl DirectLightingIntegrator {
 impl DirectLightingIntegrator {
     pub fn render(&mut self, view: &View) {
         let samples_per_pixel = view.samples_per_pixel;
-        let single_thread = true;
+        let single_thread = false;
 
         let num_pixels = view.width as usize * view.height as usize;
         let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.)); num_pixels];

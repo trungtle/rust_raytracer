@@ -1,4 +1,5 @@
 use std::ops;
+use std::ops::{Index, IndexMut};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vec3 {
@@ -90,6 +91,19 @@ impl From<f64> for Vec3 {
 // ----------------------------------------------------------------------------
 // Operator overloading
 // ----------------------------------------------------------------------------
+impl Index<usize> for Vec3 {
+    type Output = f64;
+    fn index<'a>(&'a self, i: usize) -> &f64 {
+        if i == 0 {
+            return &self.x;
+        } else if i == 1{
+            return &self.y;
+        } else {
+            return &self.z;
+        }
+    }
+}
+
 impl ops::Neg for Vec3 {
     type Output = Self;
 
