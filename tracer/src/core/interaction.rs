@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::core::primitive::Primitive;
 use crate::math::vectors::{Vec2, Vec3};
 
@@ -6,7 +7,7 @@ pub struct SurfaceInteraction {
     pub hit_point: Vec3,
     pub hit_normal: Vec3,
     pub hit_uv: Vec2,
-    pub hit_primitive: Option<Box<Primitive>>
+    pub hit_primitive: Option<Primitive>
 }
 
 impl SurfaceInteraction {

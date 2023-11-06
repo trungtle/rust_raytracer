@@ -1,7 +1,6 @@
 pub mod film;
 pub mod geometry;
 pub mod interaction;
-pub mod material;
 pub mod primitive;
 pub mod sampler;
 pub mod shape;

@@ -37,10 +37,10 @@ impl Scene {
                 closest_isect.hit_normal = isect.hit_normal;
                 closest_isect.hit_point = isect.hit_point;
                 closest_isect.hit_uv = isect.hit_uv;
-                closest_isect.hit_primitive = Some(Box::new(primitive.clone()));
+                closest_isect.hit_primitive = Some(primitive.clone());
             }
         }
-        if closest_t < MAX_T {
+        if closest_t < MAX_T && closest_t > 1e-5 {
             return true;
         } else {
             return false;

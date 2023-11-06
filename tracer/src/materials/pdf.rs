@@ -4,7 +4,7 @@ use crate::math::vectors::Vec3;
 
 pub trait Pdf {
     fn value(direction: &Vec3) -> f64;
-    fn sample_wi(&self) -> Vec3;
+    fn sample_wi(&self, sampler: &mut Sampler) -> Vec3;
 }
 
 pub struct UniformPdf {
@@ -24,10 +24,10 @@ impl Pdf for UniformPdf {
         std::f64::consts::FRAC_1_PI
     }
 
-    fn sample_wi(&self) -> Vec3 {
+    fn sample_wi(&self, sampler: &mut Sampler) -> Vec3 {
         // Pick a random point inside a unity sphere tangent to the xy plane,
         // then generate a new direction from it
-        self.uvw.from_local(&(Sampler::sample_cosine_direction()))// + Vec3::new(0.,0.,1.)))
+        self.uvw.from_local(&(sampler.sample_cosine_direction()))// + Vec3::new(0.,0.,1.)))
     }
 }
 

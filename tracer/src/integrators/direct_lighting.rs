@@ -1,10 +1,10 @@
 use std::f64::consts::PI;
+use std::sync::Arc;
 
 use rayon::prelude::*;
 
 use crate::core::{
     interaction::SurfaceInteraction,
-    material::Material,
     primitive::Primitive,
     ray::Ray,
     sampler::Sampler,
@@ -31,7 +31,7 @@ impl DirectLightingIntegrator {
         return spectrum / PI;
     }
 
-    fn li(&self, ray: &Ray) -> Spectrum {
+    fn li(&self, ray: &Ray, sampler: &mut Sampler) -> Spectrum {
         const MAX_DEPTH: u32 = 10;
 
         let mut acc_color = Spectrum::ColorRGB(Vec3::from(0.0));
@@ -53,26 +53,12 @@ impl DirectLightingIntegrator {
 
             match isect.hit_primitive {
                 Some(primitive) => {
-                    match *primitive {
-                        Primitive::Shape(primitive) => {
-                            match primitive.material {
-                                Some(material) => {
-                                    match *material {
-                                        Material::Constant(material) => {
-                                            material.scatter(&mut scatter_ray, &mut material_color, &isect.hit_normal);
-                                        },
-                                        Material::Matte(_material) => {
-
-                                        },
-                                        Material::Metal(material) => {
-                                            material_color = material.color.clone();
-                                            material.scatter(&mut scatter_ray, &mut material_color, &isect.hit_point, &isect.hit_normal);
-                                        }
-                                    }
-                                }
-                                None => {}
-                            }
+                    match primitive.material {
+                        Some(material) => {
+                            material_color = material.value().clone();
+                            material.scatter(&mut scatter_ray, &mut material_color, &isect.hit_point, &isect.hit_normal, sampler);
                         }
+                        None => {}
                     }
                 },
                 None => {}
@@ -104,14 +90,16 @@ impl DirectLightingIntegrator {
         let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.)); num_pixels];
 
         if single_thread {
+            let mut sampler = Sampler::new();
+
             // Single threaded version
             for y in (0..view.height).rev() {
                 for x in 0..view.width {
                     let Spectrum::ColorRGB(mut total_spectrum) = Spectrum::ColorRGB(Vec3::from(0.));
                     for _ in 0..samples_per_pixel {
-                        let uv: Vec2 = Sampler::sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
-                        let mut ray = self.scene.persp_camera.get_ray(&uv);
-                        let li = self.li(&mut ray);
+                        let uv: Vec2 = sampler.sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
+                        let mut ray = self.scene.persp_camera.get_ray(&uv, &mut sampler);
+                        let li = self.li(&mut ray, &mut sampler);
                         match li {
                             Spectrum::ColorRGB(li) => total_spectrum = li + total_spectrum
                         }
@@ -130,10 +118,11 @@ impl DirectLightingIntegrator {
                 let y: u32 = i as u32 / view.width;
                 let mut total_spectrum = (0..samples_per_pixel).into_par_iter().
                 map(|_sample| {
-                    let uv: Vec2 = Sampler::sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
+                    let mut sampler = Sampler::new();
+                    let uv: Vec2 = sampler.sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
 
-                    let ray = self.scene.persp_camera.get_ray(&uv);
-                    let Spectrum::ColorRGB(color) = self.li(&ray);
+                    let ray = self.scene.persp_camera.get_ray(&uv, &mut sampler);
+                    let Spectrum::ColorRGB(color) = self.li(&ray, &mut sampler);
                     color
                 }).sum::<Vec3>();
 

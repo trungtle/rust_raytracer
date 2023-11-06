@@ -8,13 +8,12 @@ pub mod shapes;
 pub mod textures;
 
 use env_logger;
-use materials::MetalMaterial;
+use tracer::App;
 
 use std::{
-    ffi::CString,
-    num::NonZeroU32,
     time::Instant,
-    env
+    env,
+    sync::Arc
 };
 
 use crate::math::vectors:: {
@@ -25,16 +24,15 @@ use crate::core::sampler;
 use crate::core::{
     film::Film,
     primitive::Primitive,
-    primitive::ShapePrimitive,
-    material::Material,
     scene::Scene,
     shape::Shape,
     spectrum::Spectrum,
     view::View
 };
 use crate::materials::{
-    constant::ConstantMaterial,
-    matte::MatteMaterial
+    ConstantMaterial,
+    MetalMaterial,
+    LambertMaterial
 };
 use crate::shapes::{
     mesh::Mesh,
@@ -88,26 +86,11 @@ fn gltf_scene() -> Scene
     // let g_data = loaders::gltf_loader::load_gltf("assets/glTF/Box/glTF/Box.gltf");
     let g_data = loaders::gltf_loader::load_gltf("assets/glTF/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
 
-    // scene.add(
-    //     Primitive::Shape(Box::new(
-    //         ShapePrimitive::new(
-    //             Shape::Sphere(Sphere::new(Vec3::new(0., 0., -1.), 0.5)),
-    //             Option::Some(
-    //                 Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 0.0, 0.0))))))))));
-
-    // scene.add(
-    //     Primitive::Shape(Box::new(
-    //         ShapePrimitive::new(
-    //             Shape::Sphere(Sphere::new(Vec3::new(-1., 0., -1.), 0.5)),
-    //             Option::Some(
-    //                 Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 0.0))))))))));
-
     // Floor
     scene.add(
-        Primitive::Shape(Box::new(
-            ShapePrimitive::new(
+        Primitive::new(
                 Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
-                Option::None))));
+                Option::None));
 
     // scene.add(
     //     Primitive::Shape(Box::new(
@@ -124,8 +107,7 @@ fn gltf_scene() -> Scene
     for mesh in g_data.doc.meshes() {
         for primitive in mesh.primitives() {
             let mesh = Mesh::from_gltf(&primitive, &g_data);
-            let material = Option::Some(Box::new(Material::Metal(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))));
-            let primitive = Primitive::Shape(Box::new(ShapePrimitive::new(Shape::Mesh(mesh), material)));
+            let primitive = Primitive::new(Shape::Mesh(mesh), Option::Some(Arc::new(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))));
             scene.add(primitive);
         }
     }
@@ -150,33 +132,29 @@ fn raytracing_weekend_scene() -> Scene
     };
 
     scene.add(
-    Primitive::Shape(Box::new(
-        ShapePrimitive::new(
+    Primitive::new(
             Shape::Sphere(Sphere::new(Vec3::new(0., 0., -1.), 0.5)),
             Option::Some(
-                Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.2, 0.5))))))))));
+                Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.2, 0.5)))))));
 
     scene.add(
-        Primitive::Shape(Box::new(
-            ShapePrimitive::new(
+        Primitive::new(
                 Shape::Sphere(Sphere::new(Vec3::new(1., 0., -1.), 0.5)),
                 Option::Some(
-                    Box::new(Material::Metal(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))))))));
+                    Arc::new(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5)))))));
 
     scene.add(
-        Primitive::Shape(Box::new(
-            ShapePrimitive::new(
+        Primitive::new(
                 Shape::Sphere(Sphere::new(Vec3::new(-1., 0., -1.), 0.5)),
                 Option::Some(
-                    Box::new(Material::Metal(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))))))));
+                    Arc::new(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5)))))));
 
     // Ground
     scene.add(
-        Primitive::Shape(Box::new(
-            ShapePrimitive::new(
+        Primitive::new(
                 Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
                 Option::Some(
-                    Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2))))))))));
+                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
 
     return scene;
 }
@@ -203,26 +181,23 @@ fn furnace_test() -> Scene
     // };
 
     scene.add(
-    Primitive::Shape(Box::new(
-        ShapePrimitive::new(
+        Primitive::new(
             Shape::Sphere(Sphere::new(Vec3::new(0., 0., 0.), 2.)),
             Option::Some(
-                Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 1.0))))))))));
+                Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 1.0)))))));
 
     if reveal {
         scene.add(
-            Primitive::Shape(Box::new(
-                ShapePrimitive::new(
-                    Shape::Sphere(Sphere::new(Vec3::new(3., 0., -0.5), 1.)),
-                    Option::Some(
-                        Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.8, 0.0, 0.0))))))))));
+            Primitive::new(
+                Shape::Sphere(Sphere::new(Vec3::new(3., 0., -0.5), 1.)),
+                Option::Some(
+                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.8, 0.0, 0.0)))))));
 
         scene.add(
-            Primitive::Shape(Box::new(
-                ShapePrimitive::new(
-                    Shape::Sphere(Sphere::new(Vec3::new(0., 3., -0.5), 1.)),
-                    Option::Some(
-                        Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.8, 0.1, 0.02))))))))));
+            Primitive::new(
+                Shape::Sphere(Sphere::new(Vec3::new(0., 3., -0.5), 1.)),
+                Option::Some(
+                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.8, 0.1, 0.02)))))));
     }
 
     return scene;
@@ -250,10 +225,10 @@ fn test_samplers() {
 
     let num_samples = 1000;
     let color = Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 1.0));
-
+    let mut sampler = sampler::Sampler::new();
     for _i in 0..num_samples {
         // Return a point ranges from -1 to 1
-        let random = sampler::Sampler::random_vec2_0_1();
+        let random = sampler.random_vec2_0_1();
         let mut point = sampler::Sampler::sample_unit_disk_concentric(random);
         point.x = point.x * film.width as f64 / 4.0 + film.width as f64 / 2.0;
         point.y = point.y * film.height as f64 / 4.0 + film.height as f64 / 2.0;
@@ -267,6 +242,23 @@ fn test_samplers() {
     log::info!("Sampler test: {:?}", film.file_name);
 }
 
+fn init_ui() -> Result<(), eframe::Error> {
+    let mut ctx = egui::Context::default();
+
+    let options = eframe::NativeOptions {
+        initial_window_size: Some(egui::Vec2 { x: 320.0, y: 240.0 }),
+        ..Default::default()
+    };
+
+    eframe::run_native(
+        "My app",
+        options,
+        Box::new(|creation_context| {
+            Box::<App>::default()
+        }),
+    )
+}
+
 fn main() {
 
 
@@ -275,6 +267,12 @@ fn main() {
     env::set_var(key, "info");
 
     env_logger::init();
+
+    let ui_result = init_ui();
+    match ui_result {
+        Ok(_) => {}
+        Err(err) => log::error!("Failed to create ui with error {}", err)
+    }
 
     render();
     //test_samplers();
