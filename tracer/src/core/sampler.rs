@@ -1,7 +1,5 @@
 use rand::prelude::*;
-use std::f64::consts::PI;
-
-pub use crate::math::vectors::{Vec2, Vec3};
+use math::{Vec2, Vec3};
 
 pub struct Sampler {
     pub rng_generator: ThreadRng

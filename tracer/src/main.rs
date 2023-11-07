@@ -1,9 +1,11 @@
+extern crate math;
+use math::Vec3;
+
 pub mod cameras;
 pub mod core;
 pub mod integrators;
 pub mod loaders;
 pub mod materials;
-pub mod math;
 pub mod shapes;
 pub mod textures;
 
@@ -16,10 +18,7 @@ use std::{
     sync::Arc
 };
 
-use crate::math::vectors:: {
-    Vec2,
-    Vec3
-};
+
 use crate::core::sampler;
 use crate::core::{
     film::Film,
@@ -60,9 +59,52 @@ fn pbrt4_scene() -> Scene
     log::info!("Loading scene: {}", &path);
     let pbrt_scene = pbrt4::Scene::from_file(&path).unwrap();
 
-    for shape in pbrt_scene.shapes {
-        log::info!("Shape {:#?}", shape);
+
+    println!("Global options: {:#?}", pbrt_scene.options);
+
+    if let Some(camera) = pbrt_scene.camera {
+        println!("Camera: {:#?}", camera);
     }
+
+    if let Some(film) = pbrt_scene.film {
+        println!("Film: {:#?}", film);
+    }
+
+    if let Some(integrator) = pbrt_scene.integrator {
+        println!("Integrator: {:#?}", integrator);
+    }
+
+    if let Some(accelerator) = pbrt_scene.accelerator {
+        println!("Accelerator: {:#?}", accelerator);
+    }
+
+    if let Some(sampler) = pbrt_scene.sampler {
+        println!("Sampler: {:#?}", sampler);
+    }
+
+    println!("World begin");
+
+    for texture in pbrt_scene.textures {
+        println!("Texture: {:#?}", texture);
+    }
+
+    for material in pbrt_scene.materials {
+        println!("Material: {:#?}", material);
+    }
+
+    for light in pbrt_scene.lights {
+        println!("Light: {:#?}", light);
+    }
+
+    for medium in pbrt_scene.mediums {
+        println!("Medium: {:#?}", medium);
+    }
+
+    for shape in pbrt_scene.shapes {
+        println!("Shape: {:#?}", shape);
+    }
+
+    println!("Done");
 
     return scene;
 }
@@ -268,11 +310,11 @@ fn main() {
 
     env_logger::init();
 
-    let ui_result = init_ui();
-    match ui_result {
-        Ok(_) => {}
-        Err(err) => log::error!("Failed to create ui with error {}", err)
-    }
+    // let ui_result = init_ui();
+    // match ui_result {
+    //     Ok(_) => {}
+    //     Err(err) => log::error!("Failed to create ui with error {}", err)
+    // }
 
     render();
     //test_samplers();

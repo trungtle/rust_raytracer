@@ -1,5 +1,17 @@
 use std::ops;
 use std::ops::{Index, IndexMut};
+use super::tuple::{Tuple2d, Tuple3d, Tuple4d};
+
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub enum Vector {
+    Vector2d(Tuple2d),
+    Vector3d(Tuple3d),
+    Vector4d(Tuple4d)
+}
+
+// pub fn sqrt(v: Vector) -> Vector {
+
+// }
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vec3 {

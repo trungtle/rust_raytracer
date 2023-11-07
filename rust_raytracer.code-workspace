@@ -4,5 +4,12 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"rust-analyzer.linkedProjects": [
+			".\\tracer\\Cargo.toml",
+			".\\math\\Cargo.toml",
+			".\\math\\Cargo.toml",
+			".\\tracer\\Cargo.toml"
+		]
+	}
 }

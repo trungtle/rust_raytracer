@@ -1,6 +1,6 @@
-use std::sync::Arc;
+use math::{Vec2, Vec3};
+
 use crate::core::primitive::Primitive;
-use crate::math::vectors::{Vec2, Vec3};
 
 pub struct SurfaceInteraction {
     pub t: f64,

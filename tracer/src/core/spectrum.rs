@@ -1,6 +1,5 @@
 use std::ops;
-
-use crate::math::vectors::Vec3;
+use math::Vec3;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Spectrum {

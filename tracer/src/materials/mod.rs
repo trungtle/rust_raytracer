@@ -1,4 +1,5 @@
-pub mod constant;
+use math::Vec3;
+
 pub mod matte;
 pub mod pdf;
 
@@ -7,7 +8,6 @@ use crate::materials::{
     pdf::UniformPdf
 };
 
-use crate::math::vectors::Vec3;
 use crate::core::{spectrum::Spectrum, ray::Ray, interaction::SurfaceInteraction, sampler:: Sampler};
 
 pub trait Material: Send + Sync {

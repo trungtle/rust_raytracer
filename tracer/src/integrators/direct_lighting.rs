@@ -3,6 +3,8 @@ use std::sync::Arc;
 
 use rayon::prelude::*;
 
+use math::{Vec2, Vec3};
+
 use crate::core::{
     interaction::SurfaceInteraction,
     primitive::Primitive,
@@ -12,8 +14,6 @@ use crate::core::{
     spectrum::Spectrum,
     view::View
 };
-
-use crate::math::vectors::{Vec2,Vec3};
 
 pub struct DirectLightingIntegrator {
     pub scene: Scene,

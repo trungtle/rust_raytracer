@@ -1581,6 +1581,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "math"
+version = "0.1.0"
+
+[[package]]
 name = "memchr"
 version = "2.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2551,6 +2555,7 @@ dependencies = [
  "env_logger",
  "gltf",
  "log",
+ "math",
  "pbr",
  "pbrt4",
  "rand",

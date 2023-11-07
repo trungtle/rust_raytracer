@@ -9,3 +9,6 @@ pub mod ray;
 pub mod spectrum;
 pub mod texture;
 pub mod view;
+pub mod transform;
+
+pub use transform::Transform;

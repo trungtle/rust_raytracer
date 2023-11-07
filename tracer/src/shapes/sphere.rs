@@ -1,8 +1,8 @@
 use std::f64::consts::PI;
+use math::{Vec2, Vec3};
 
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
-use crate::math::vectors::{Vec2, Vec3};
 
 #[derive(Copy, Clone)]
 pub struct Sphere {
@@ -68,7 +68,7 @@ impl Sphere {
                     isect.hit_normal = self.normal_at(&isect.hit_point);
                     isect.hit_uv = self.uv_at(&isect.hit_point);
                     return true;
-                }    
+                }
             }
 		}
         return false;

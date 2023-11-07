@@ -1,7 +1,7 @@
+use math::{Vec2, Vec3};
+
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
-use crate::math::vectors::{Vec2, Vec3};
-
 #[derive(Copy, Clone)]
 pub struct Triangle {
     pub v0: Vec3,
@@ -39,12 +39,12 @@ impl Triangle {
         let d = 1.0 / Vec3::dot( ray.direction, n );
         let u = d*Vec3::dot( -q, v2v0 );
         let v = d*Vec3::dot(  q, v1v0 );
-        let t = d*Vec3::dot( -n, rov0 ); 
-    
+        let t = d*Vec3::dot( -n, rov0 );
+
         if u < 0.0 || v < 0.0 || (u + v) > 1.0 {
             return false;
         }
-        
+
         isect.t = t;
         isect.hit_point = Vec3::new( t, u, v );
         isect.hit_normal = self.normal_at(&isect.hit_point);

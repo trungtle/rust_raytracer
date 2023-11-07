@@ -1,10 +1,9 @@
 use gltf;
-use log::{info, debug, trace, warn};
+use math::{Vec2, Vec3};
 
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
 use crate::loaders::gltf_loader::GData;
-use crate::math::vectors::{Vec2, Vec3};
 use crate::shapes::triangle::Triangle;
 
 #[derive(Clone, Debug)]
