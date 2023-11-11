@@ -1,5 +1,6 @@
 use std::ops;
 use std::ops::{Index, IndexMut};
+use crate::types::Float;
 use super::tuple::{Tuple2d, Tuple3d, Tuple4d};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -13,40 +14,40 @@ pub enum Vector {
 
 // }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Vec3 {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64
+    pub x: Float,
+    pub y: Float,
+    pub z: Float
 }
 
 impl Vec3 {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
+    pub fn new(x: Float, y: Float, z: Float) -> Self {
         Self {
             x, y, z
         }
     }
 
-    pub fn x(&self) -> f64 { self.x }
-    pub fn y(&self) -> f64 { self.y }
-    pub fn z(&self) -> f64 { self.z }
-    pub fn r(&self) -> f64 { self.x }
-    pub fn g(&self) -> f64 { self.y }
-    pub fn b(&self) -> f64 { self.z }
+    pub fn x(&self) -> Float { self.x }
+    pub fn y(&self) -> Float { self.y }
+    pub fn z(&self) -> Float { self.z }
+    pub fn r(&self) -> Float { self.x }
+    pub fn g(&self) -> Float { self.y }
+    pub fn b(&self) -> Float { self.z }
 
     pub fn sqrt(v: Vec3) -> Vec3 {
         Vec3::new(
-            f64::sqrt(v.x),
-            f64::sqrt(v.y),
-            f64::sqrt(v.z)
+            Float::sqrt(v.x),
+            Float::sqrt(v.y),
+            Float::sqrt(v.z)
         )
     }
 
-    pub fn length(&self) -> f64 {
-        f64::sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
+    pub fn length(&self) -> Float {
+        Float::sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
     }
 
-    pub fn length2(&self) -> f64 {
+    pub fn length2(&self) -> Float {
         self.x*self.x + self.y*self.y + self.z*self.z
     }
 
@@ -59,7 +60,7 @@ impl Vec3 {
         }
     }
 
-    pub fn clamp(&self, min: f64, max: f64) -> Vec3 {
+    pub fn clamp(&self, min: Float, max: Float) -> Vec3 {
         Vec3 {
             x: self.x.clamp(min, max),
             y: self.y.clamp(min, max),
@@ -67,7 +68,7 @@ impl Vec3 {
         }
     }
 
-    pub fn dot(v1: Vec3, v2: Vec3) -> f64 {
+    pub fn dot(v1: Vec3, v2: Vec3) -> Float {
         v1.x() * v2.x() + v1.y() * v2.y() + v1.z() * v2.z()
     }
 
@@ -92,8 +93,8 @@ impl Vec3 {
 // ----------------------------------------------------------------------------
 // Conversion from other types
 // ----------------------------------------------------------------------------
-impl From<f64> for Vec3 {
-    fn from(item: f64) -> Self {
+impl From<Float> for Vec3 {
+    fn from(item: Float) -> Self {
         Vec3 {
             x: item, y: item, z: item
         }
@@ -104,14 +105,26 @@ impl From<f64> for Vec3 {
 // Operator overloading
 // ----------------------------------------------------------------------------
 impl Index<usize> for Vec3 {
-    type Output = f64;
-    fn index<'a>(&'a self, i: usize) -> &f64 {
+    type Output = Float;
+    fn index<'a>(&'a self, i: usize) -> &Float {
         if i == 0 {
             return &self.x;
         } else if i == 1{
             return &self.y;
         } else {
             return &self.z;
+        }
+    }
+}
+
+impl IndexMut<usize> for Vec3 {
+    fn index_mut<'a>(&mut self, i: usize) -> &mut Self::Output {
+        if i == 0 {
+            return &mut self.x;
+        } else if i == 1{
+            return &mut self.y;
+        } else {
+            return &mut self.z;
         }
     }
 }
@@ -150,8 +163,8 @@ impl ops::AddAssign<Vec3> for Vec3 {
     }
 }
 
-impl ops::AddAssign<f64> for Vec3 {
-    fn add_assign(&mut self, other: f64) {
+impl ops::AddAssign<Float> for Vec3 {
+    fn add_assign(&mut self, other: Float) {
         *self = Self {
             x: self.x + other,
             y: self.y + other,
@@ -172,8 +185,8 @@ impl ops::Sub<Vec3> for Vec3 {
     }
 }
 
-impl ops::SubAssign<f64> for Vec3 {
-    fn sub_assign(&mut self, other: f64) {
+impl ops::SubAssign<Float> for Vec3 {
+    fn sub_assign(&mut self, other: Float) {
         *self = Self {
             x: self.x - other,
             y: self.y - other,
@@ -192,10 +205,10 @@ impl ops::SubAssign<Vec3> for Vec3 {
     }
 }
 
-impl ops::Mul<f64> for Vec3 {
+impl ops::Mul<Float> for Vec3 {
     type Output = Vec3;
 
-    fn mul(self, _rhs: f64) -> Self::Output {
+    fn mul(self, _rhs: Float) -> Self::Output {
         Vec3 {
             x: self.x * _rhs,
             y: self.y * _rhs,
@@ -204,7 +217,7 @@ impl ops::Mul<f64> for Vec3 {
     }
 }
 
-impl ops::Mul<Vec3> for f64 {
+impl ops::Mul<Vec3> for Float {
     type Output = Vec3;
 
     fn mul(self, _rhs: Vec3) -> Self::Output {
@@ -228,8 +241,8 @@ impl ops::Mul<Vec3> for Vec3 {
     }
 }
 
-impl ops::MulAssign<f64> for Vec3 {
-    fn mul_assign(&mut self, other: f64) {
+impl ops::MulAssign<Float> for Vec3 {
+    fn mul_assign(&mut self, other: Float) {
         *self = Self {
             x: self.x * other,
             y: self.y * other,
@@ -238,10 +251,10 @@ impl ops::MulAssign<f64> for Vec3 {
     }
 }
 
-impl ops::Div<f64> for Vec3 {
+impl ops::Div<Float> for Vec3 {
     type Output = Vec3;
 
-    fn div(self, _rhs: f64) -> Self::Output  {
+    fn div(self, _rhs: Float) -> Self::Output  {
         Vec3 {
             x: self.x / _rhs,
             y: self.y / _rhs,
@@ -250,8 +263,8 @@ impl ops::Div<f64> for Vec3 {
     }
 }
 
-impl ops::DivAssign<f64> for Vec3 {
-    fn div_assign(&mut self, other: f64) {
+impl ops::DivAssign<Float> for Vec3 {
+    fn div_assign(&mut self, other: Float) {
         *self = Self {
             x: self.x / other,
             y: self.y / other,
@@ -278,25 +291,25 @@ impl std::iter::Sum for Vec3 {
 // ----------------------------------------------------------------------------
 #[derive(Copy, Clone, Debug)]
 pub struct Vec2 {
-    pub x: f64,
-    pub y: f64
+    pub x: Float,
+    pub y: Float
 }
 
 impl Vec2 {
-    pub fn new(x: f64, y: f64) -> Self {
+    pub fn new(x: Float, y: Float) -> Self {
         Self {
             x, y
         }
     }
 
-    pub fn x(&self) -> f64 { self.x }
-    pub fn y(&self) -> f64 { self.y }
+    pub fn x(&self) -> Float { self.x }
+    pub fn y(&self) -> Float { self.y }
 
-    pub fn length(&self) -> f64 {
-        f64::sqrt(self.x*self.x + self.y*self.y)
+    pub fn length(&self) -> Float {
+        Float::sqrt(self.x*self.x + self.y*self.y)
     }
 
-    pub fn length2(&self) -> f64 {
+    pub fn length2(&self) -> Float {
         self.x*self.x + self.y*self.y
     }
 
@@ -308,7 +321,7 @@ impl Vec2 {
         }
     }
 
-    pub fn dot(v1: Vec2, v2: Vec2) -> f64 {
+    pub fn dot(v1: Vec2, v2: Vec2) -> Float {
         v1.x() * v2.x() + v1.y() * v2.y()
     }
 }
@@ -316,8 +329,8 @@ impl Vec2 {
 // ----------------------------------------------------------------------------
 // Conversion from other types
 // ----------------------------------------------------------------------------
-impl From<f64> for Vec2 {
-    fn from(item: f64) -> Self {
+impl From<Float> for Vec2 {
+    fn from(item: Float) -> Self {
         Vec2 {
             x: item, y: item
         }
@@ -358,8 +371,8 @@ impl ops::AddAssign<Vec2> for Vec2 {
     }
 }
 
-impl ops::AddAssign<f64> for Vec2 {
-    fn add_assign(&mut self, other: f64) {
+impl ops::AddAssign<Float> for Vec2 {
+    fn add_assign(&mut self, other: Float) {
         *self = Self {
             x: self.x + other,
             y: self.y + other
@@ -378,8 +391,8 @@ impl ops::Sub<Vec2> for Vec2 {
     }
 }
 
-impl ops::SubAssign<f64> for Vec2 {
-    fn sub_assign(&mut self, other: f64) {
+impl ops::SubAssign<Float> for Vec2 {
+    fn sub_assign(&mut self, other: Float) {
         *self = Self {
             x: self.x - other,
             y: self.y - other
@@ -396,10 +409,10 @@ impl ops::SubAssign<Vec2> for Vec2 {
     }
 }
 
-impl ops::Mul<f64> for Vec2 {
+impl ops::Mul<Float> for Vec2 {
     type Output = Vec2;
 
-    fn mul(self, _rhs: f64) -> Self::Output {
+    fn mul(self, _rhs: Float) -> Self::Output {
         Vec2 {
             x: self.x * _rhs,
             y: self.y * _rhs
@@ -407,7 +420,7 @@ impl ops::Mul<f64> for Vec2 {
     }
 }
 
-impl ops::Mul<Vec2> for f64 {
+impl ops::Mul<Vec2> for Float {
     type Output = Vec2;
 
     fn mul(self, _rhs: Vec2) -> Self::Output {
@@ -418,8 +431,8 @@ impl ops::Mul<Vec2> for f64 {
     }
 }
 
-impl ops::MulAssign<f64> for Vec2 {
-    fn mul_assign(&mut self, other: f64) {
+impl ops::MulAssign<Float> for Vec2 {
+    fn mul_assign(&mut self, other: Float) {
         *self = Self {
             x: self.x * other,
             y: self.y * other
@@ -428,8 +441,8 @@ impl ops::MulAssign<f64> for Vec2 {
 }
 
 
-impl ops::DivAssign<f64> for Vec2 {
-    fn div_assign(&mut self, other: f64) {
+impl ops::DivAssign<Float> for Vec2 {
+    fn div_assign(&mut self, other: Float) {
         *self = Self {
             x: self.x / other,
             y: self.y / other

@@ -11,13 +11,22 @@ use crate::core::Transform;
 pub struct Primitive {
     pub shape: Shape,
     pub material: Option<Arc<dyn Material>>,
-    pub transform: Transform
+    transform: Transform
 
 }
 
 impl Primitive {
     pub fn new(shape: Shape, material: Option<Arc<dyn Material>>) -> Self {
         Primitive { shape, material, transform: Transform::default() }
+    }
+
+    pub fn transform(&self) -> Transform {
+        self.transform.clone()
+    }
+
+    pub fn apply_transform(&mut self, new_transform: Transform) {
+        self.transform = new_transform;
+        self.shape.apply_transform(&self.transform);
     }
 
     pub fn intersect(&self, ray: &Ray, isect: &mut SurfaceInteraction) -> bool {

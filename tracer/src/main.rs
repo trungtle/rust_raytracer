@@ -1,5 +1,5 @@
 extern crate math;
-use math::Vec3;
+use math::{Vec2, Vec3};
 
 pub mod cameras;
 pub mod core;
@@ -19,13 +19,14 @@ use std::{
 };
 
 
-use crate::core::sampler;
 use crate::core::{
     film::Film,
     primitive::Primitive,
+    sampler,
     scene::Scene,
     shape::Shape,
     spectrum::Spectrum,
+    transform::Transform,
     view::View
 };
 use crate::materials::{
@@ -125,31 +126,33 @@ fn gltf_scene() -> Scene
         return sky_environment;
     };
 
-    // let g_data = loaders::gltf_loader::load_gltf("assets/glTF/Box/glTF/Box.gltf");
-    let g_data = loaders::gltf_loader::load_gltf("assets/glTF/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
+    let g_data = loaders::gltf_loader::load_gltf("assets/glTF/Box/glTF/Box.gltf");
+    //let g_data = loaders::gltf_loader::load_gltf("assets/glTF/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
 
     // Floor
     scene.add(
         Primitive::new(
                 Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
-                Option::None));
+                Option::Some(
+                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
 
-    // scene.add(
-    //     Primitive::Shape(Box::new(
-    //         ShapePrimitive::new(
-    //             Shape::Triangle(
-    //                 Triangle::new(
-    //                     Vec3::new(-1., 0., -1.),
-    //                     Vec3::new(1., 0., -1.),
-    //                     Vec3::new(0., 1., -1.))),
-    //         Option::Some(
-    //             Box::new(Material::Constant(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 0.0))))))))));
+    scene.add(
+    Primitive::new(
+            Shape::Triangle(
+                Triangle::new(
+                    Vec3::new(-1., 0., -1.),
+                    Vec3::new(1., 0., -1.),
+                    Vec3::new(0., 1., -1.))),
+        Option::Some(
+            Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 0.0)))))));
 
 
     for mesh in g_data.doc.meshes() {
         for primitive in mesh.primitives() {
             let mesh = Mesh::from_gltf(&primitive, &g_data);
-            let primitive = Primitive::new(Shape::Mesh(mesh), Option::Some(Arc::new(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))));
+            let mut primitive = Primitive::new(Shape::Mesh(mesh), Option::Some(Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))));
+            primitive.apply_transform(Transform::translate(Vec3 { x: 0.0, y: 1.0, z: 0.0 }));
+            primitive.apply_transform(Transform::rotate_x(90.0));
             scene.add(primitive);
         }
     }
@@ -247,7 +250,7 @@ fn furnace_test() -> Scene
 
 fn render() {
     // Initialize scene
-    let scene = raytracing_weekend_scene();
+    let scene = gltf_scene();
 
     let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL);
 
@@ -272,6 +275,7 @@ fn test_samplers() {
         // Return a point ranges from -1 to 1
         let random = sampler.random_vec2_0_1();
         let mut point = sampler::Sampler::sample_unit_disk_concentric(random);
+        point = sampler.sample_from_pixel( Vec2::new( 10., 10.), SCREEN_WIDTH, SCREEN_HEIGHT);
         point.x = point.x * film.width as f64 / 4.0 + film.width as f64 / 2.0;
         point.y = point.y * film.height as f64 / 4.0 + film.height as f64 / 2.0;
 
