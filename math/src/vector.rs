@@ -28,6 +28,10 @@ impl Vec3 {
         }
     }
 
+    pub fn zero() -> Self {
+        Self { x: 0., y: 0., z: 0. }
+    }
+
     pub fn x(&self) -> Float { self.x }
     pub fn y(&self) -> Float { self.y }
     pub fn z(&self) -> Float { self.z }

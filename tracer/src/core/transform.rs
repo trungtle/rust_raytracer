@@ -49,7 +49,7 @@ impl Transform {
     }
 
     pub fn get_position(&self) -> Vec3 {
-        Vec3::new(self.matrix[[3,0]], self.matrix[[3,1]], self.matrix[[3,2]])
+        Vec3::new(self.matrix[[0,3]], self.matrix[[1,3]], self.matrix[[2,3]])
     }
 
     pub fn get_scale(&self) -> Vec3 {
@@ -58,19 +58,19 @@ impl Transform {
 
     pub fn translate(position: Vec3) -> Self {
         let mut out_transform = Transform::default();
-        out_transform.matrix[[3, 0]] = position[0];
-        out_transform.matrix[[3, 1]] = position[1];
-        out_transform.matrix[[3, 2]] = position[2];
+        out_transform.matrix[[0, 3]] = position[0];
+        out_transform.matrix[[1, 3]] = position[1];
+        out_transform.matrix[[2, 3]] = position[2];
 
-        out_transform.matrix_inv[[3, 0]] = -position[0];
-        out_transform.matrix_inv[[3, 1]] = -position[1];
-        out_transform.matrix_inv[[3, 2]] = -position[2];
+        out_transform.matrix_inv[[0, 3]] = -position[0];
+        out_transform.matrix_inv[[1, 3]] = -position[1];
+        out_transform.matrix_inv[[2, 3]] = -position[2];
         return out_transform;
     }
 
     pub fn rotate_x(theta_radian: Float) -> Self {
         let sintheta = theta_radian.sin();
-        let costheta = theta_radian.sin();
+        let costheta = theta_radian.cos();
         let out_transform = Transform::from_array(
             [[1., 0., 0., 0.],
             [0., costheta, -sintheta, 0.],
@@ -81,7 +81,7 @@ impl Transform {
 
     pub fn rotate_y(theta_radian: Float) -> Self {
         let sintheta = theta_radian.sin();
-        let costheta = theta_radian.sin();
+        let costheta = theta_radian.cos();
         let out_transform = Transform::from_array(
             [[costheta, 0., sintheta, 0.],
             [0., 1., 0., 0.],
@@ -92,7 +92,7 @@ impl Transform {
 
     pub fn rotate_z(theta_radian: Float) -> Self {
         let sintheta = theta_radian.sin();
-        let costheta = theta_radian.sin();
+        let costheta = theta_radian.cos();
         let out_transform = Transform::from_array(
             [[costheta, -sintheta, 0., 0.],
             [sintheta, costheta, 0., 0.],

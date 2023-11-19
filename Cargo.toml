@@ -1,6 +1,7 @@
 [workspace]
 members= [
     "math",
+    "mesh-loader",
     "tracer",
 ]
 

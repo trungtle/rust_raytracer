@@ -12,6 +12,9 @@ pub mod textures;
 use env_logger;
 use tracer::App;
 
+use std::f64::consts::FRAC_PI_2;
+use std::f64::consts::FRAC_PI_4;
+use std::f64::consts::PI;
 use std::{
     time::Instant,
     env,
@@ -43,9 +46,9 @@ use crate::shapes::{
 use crate::cameras::perspective::PerspectiveCamera;
 use crate::integrators::direct_lighting::DirectLightingIntegrator;
 
-const SCREEN_WIDTH: u32 = 800;
-const SCREEN_HEIGHT: u32 = 800;
-const SAMPLES_PER_PIXEL: u8 = 100;
+const SCREEN_WIDTH: u32 = 400;
+const SCREEN_HEIGHT: u32 = 400;
+const SAMPLES_PER_PIXEL: u8 = 10;
 
 fn pbrt4_scene() -> Scene
 {
@@ -56,9 +59,9 @@ fn pbrt4_scene() -> Scene
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
     let mut scene = Scene::new(cam);
 
-    let path = "assets/pbrt4/pbrt-book/book.pbrt";
-    log::info!("Loading scene: {}", &path);
-    let pbrt_scene = pbrt4::Scene::from_file(&path).unwrap();
+    let path_pbrt = "assets/pbrt4/pbrt-book/book.pbrt";
+    log::info!("Loading scene: {}", &path_pbrt);
+    let pbrt_scene = pbrt4::Scene::from_file(&path_pbrt).unwrap();
 
 
     println!("Global options: {:#?}", pbrt_scene.options);
@@ -107,6 +110,23 @@ fn pbrt4_scene() -> Scene
 
     println!("Done");
 
+    scene.environment_light = |ray| -> Spectrum {
+        let t = 0.5 * ray.direction.y + 1.0;
+        let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.5, 0.7, 1.);
+        let sky_environment = Spectrum::ColorRGB(sky_color);
+        return sky_environment;
+    };
+
+    // for shape_entity in pbrt_scene.shapes {
+    //     let shape = shape_entity.params;
+    //     let mesh = Mesh::from_gltf(g_primitive, g_data)
+    //     let mut primitive = Primitive::new(Shape::Mesh(mesh), Option::Some(Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))));
+    //     let mut transform = Transform::default();
+    //     // transform = transform * Transform::scale(Vec3 { x: 3.0, y: 3.0, z: 3.0 });
+    //     primitive.apply_transform(transform);
+    //     scene.add(primitive);
+    // }
+
     return scene;
 }
 
@@ -126,8 +146,8 @@ fn gltf_scene() -> Scene
         return sky_environment;
     };
 
-    let g_data = loaders::gltf_loader::load_gltf("assets/glTF/Box/glTF/Box.gltf");
-    //let g_data = loaders::gltf_loader::load_gltf("assets/glTF/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
+    //let g_data = loaders::gltf_loader::load_gltf("assets/glTF/Box/glTF/Box.gltf");
+    let g_data = loaders::gltf_loader::load_gltf("assets/glTF/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
 
     // Floor
     scene.add(
@@ -136,23 +156,26 @@ fn gltf_scene() -> Scene
                 Option::Some(
                     Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
 
-    scene.add(
-    Primitive::new(
-            Shape::Triangle(
-                Triangle::new(
-                    Vec3::new(-1., 0., -1.),
-                    Vec3::new(1., 0., -1.),
-                    Vec3::new(0., 1., -1.))),
-        Option::Some(
-            Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 0.0)))))));
+    // scene.add(
+    // Primitive::new(
+    //         Shape::Triangle(
+    //             Triangle::new(
+    //                 Vec3::new(-1., 0., -1.),
+    //                 Vec3::new(1., 0., -1.),
+    //                 Vec3::new(0., 1., -1.))),
+    //     Option::Some(
+    //         Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 0.0)))))));
 
 
     for mesh in g_data.doc.meshes() {
         for primitive in mesh.primitives() {
             let mesh = Mesh::from_gltf(&primitive, &g_data);
             let mut primitive = Primitive::new(Shape::Mesh(mesh), Option::Some(Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))));
-            primitive.apply_transform(Transform::translate(Vec3 { x: 0.0, y: 1.0, z: 0.0 }));
-            primitive.apply_transform(Transform::rotate_x(90.0));
+            //primitive.apply_transform(Transform::translate(Vec3 { x: 0.0, y: 1.0, z: 0.0 }));
+            //primitive.apply_transform(Transform::rotate_x(PI));
+            let mut transform = Transform::rotate_x(FRAC_PI_2);
+            // transform = transform * Transform::scale(Vec3 { x: 3.0, y: 3.0, z: 3.0 });
+            primitive.apply_transform(transform);
             scene.add(primitive);
         }
     }
@@ -250,7 +273,7 @@ fn furnace_test() -> Scene
 
 fn render() {
     // Initialize scene
-    let scene = gltf_scene();
+    let scene = pbrt4_scene();
 
     let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL);
 
@@ -306,8 +329,6 @@ fn init_ui() -> Result<(), eframe::Error> {
 }
 
 fn main() {
-
-
     // Set environment variables
     let key = "RUST_LOG";
     env::set_var(key, "info");

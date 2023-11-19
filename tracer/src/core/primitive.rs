@@ -6,6 +6,7 @@ use crate::core::ray::Ray;
 use crate::core::shape::Shape;
 use crate::materials::Material;
 use crate::core::Transform;
+use crate::shapes::mesh::Mesh;
 
 #[derive(Clone)]
 pub struct Primitive {
@@ -19,6 +20,14 @@ impl Primitive {
     pub fn new(shape: Shape, material: Option<Arc<dyn Material>>) -> Self {
         Primitive { shape, material, transform: Transform::default() }
     }
+
+
+    // pub fn from_pbrt4(shape: pbrt4::ShapeEntity) -> Self {
+    //     Self {
+    //         shape: Mesh()
+    //         transform: shape.transform
+    //     }
+    // }
 
     pub fn transform(&self) -> Transform {
         self.transform.clone()

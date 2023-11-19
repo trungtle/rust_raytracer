@@ -1,4 +1,5 @@
 use gltf;
+use pbrt4;
 use math::{Vec2, Vec3};
 
 use crate::core::interaction::SurfaceInteraction;
@@ -18,6 +19,13 @@ impl Mesh {
             positions, indices
         }
     }
+
+    // pub fn from_pbrt4(shape: pbrt4::ShapeEntity) -> Self {
+    //     let mut positions: Vec<Vec3> = vec![];
+    //     let mut indices: Vec<u32> = vec![];
+
+    //     shape.params
+    // }
 
     pub fn from_gltf(g_primitive: &gltf::Primitive, g_data: &GData) -> Self {
         let mut positions: Vec<Vec3> = vec![];

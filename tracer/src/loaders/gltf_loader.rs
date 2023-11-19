@@ -39,5 +39,9 @@ pub fn load_gltf(path: &str) -> GData
        }
     }
 
+    for material in g_data.doc.materials() {
+
+    }
+
     return g_data;
 }

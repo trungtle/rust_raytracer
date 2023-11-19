@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use math::Vec3;
+use image::{GenericImage, GenericImageView, ImageBuffer, RgbImage};
 
 use crate::core::spectrum::Spectrum;
 
@@ -36,13 +37,13 @@ impl Film {
     pub fn write_image(&self) {
         let now: DateTime<Utc> = Utc::now();
         log::info!("UTC now is: {}", now);
-        let path_string = format!("output/{}-{}.ppm", self.file_name,now.format("%v-%H-%M-%S"));
-        let path = Path::new(&path_string);
-        let display = path.display();
+        let path_ppm_string = format!("output/{}-{}.ppm", self.file_name,now.format("%v-%H-%M-%S"));
+        let path_ppm = Path::new(&path_ppm_string);
 
-        let mut file = match File::create(&path) {
+        let mut img_png: RgbImage = ImageBuffer::new(self.width, self.height);
+        let mut file = match File::create(&path_ppm) {
             Ok(file) => file,
-            Err(why) => panic!("couldn't create {}: {}", display, why),
+            Err(why) => panic!("couldn't create {}: {}", path_ppm.display(), why),
         };
 
         let mut image: String = format!("P3\n{} {}\n255\n", self.width, self.height);
@@ -50,17 +51,28 @@ impl Film {
             for x in 0..self.width {
                 let index = (x + self.width * y) as usize;
                 let Spectrum::ColorRGB(color) = &self.pixels[index];
-                let ir = (255.99*color.r()) as u32;
-                let ig = (255.99*color.g()) as u32;
-                let ib = (255.99*color.b()) as u32;
+                let ir = (255.99*color.r()) as u8;
+                let ig = (255.99*color.g()) as u8;
+                let ib = (255.99*color.b()) as u8;
                 image.push_str(&format!("{} {} {}\n", ir, ig, ib));
+
+                img_png.put_pixel(x, y, image::Rgb([ir, ig, ib]));
             }
         }
 
         match file.write_all(image.as_bytes()) {
-            Ok(_) => log::info!("successfully wrote image to {}", display),
-            Err(why) => panic!("couldn't write image to {}: {}", display, why),
+            Ok(_) => log::info!("successfully wrote image to {}", path_ppm.display()),
+            Err(why) => panic!("couldn't write image to {}: {}", path_ppm.display(), why),
         };
+
+        let path_png_string = format!("output/{}-{}.png", self.file_name,now.format("%v-%H-%M-%S"));
+        let path_png = Path::new(&path_png_string);
+        match img_png.save(path_png) {
+            Ok(_) => log::info!("successfully wrote image to {}", path_png.display()),
+            Err(why) => panic!("couldn't write image to {}: {}", path_png.display(), why),
+        };
+
+
     }
 }
 
