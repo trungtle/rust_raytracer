@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use math::Vec3;
-use image::{GenericImage, GenericImageView, ImageBuffer, RgbImage};
+use image::{ImageBuffer, RgbImage};
 
 use crate::core::spectrum::Spectrum;
 
@@ -12,7 +12,8 @@ pub struct Film {
     pub width: u32,
     pub height: u32,
     pub file_name: String,
-    pub pixels: Vec<Spectrum>
+    pub file_path: String,
+    pub pixels: Vec<Spectrum>,
 }
 
 impl Film {
@@ -21,6 +22,7 @@ impl Film {
             width,
             height,
             file_name: String::from(file_name),
+            file_path: String::from(file_name),
             pixels: vec![Spectrum::ColorRGB(Vec3::from(0.)); width as usize * height as usize]
         }
     }
@@ -34,7 +36,7 @@ impl Film {
         self.pixels = pixels;
     }
 
-    pub fn write_image(&self) {
+    pub fn write_image(&mut self) {
         let now: DateTime<Utc> = Utc::now();
         log::info!("UTC now is: {}", now);
         let path_ppm_string = format!("output/{}-{}.ppm", self.file_name,now.format("%v-%H-%M-%S"));
@@ -54,8 +56,9 @@ impl Film {
                 let ir = (255.99*color.r()) as u8;
                 let ig = (255.99*color.g()) as u8;
                 let ib = (255.99*color.b()) as u8;
-                image.push_str(&format!("{} {} {}\n", ir, ig, ib));
 
+                // TODO: Create an option to write either to ppm or png, but not both
+                image.push_str(&format!("{} {} {}\n", ir, ig, ib));
                 img_png.put_pixel(x, y, image::Rgb([ir, ig, ib]));
             }
         }
@@ -65,6 +68,7 @@ impl Film {
             Err(why) => panic!("couldn't write image to {}: {}", path_ppm.display(), why),
         };
 
+        // Write to png
         let path_png_string = format!("output/{}-{}.png", self.file_name,now.format("%v-%H-%M-%S"));
         let path_png = Path::new(&path_png_string);
         match img_png.save(path_png) {
@@ -72,7 +76,7 @@ impl Film {
             Err(why) => panic!("couldn't write image to {}: {}", path_png.display(), why),
         };
 
-
+        self.file_path = path_png_string.to_owned();
     }
 }
 

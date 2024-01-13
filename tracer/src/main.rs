@@ -1,4 +1,5 @@
 extern crate math;
+use eframe::egui::load::ImageLoader;
 use math::{Vec2, Vec3};
 
 pub mod cameras;
@@ -10,7 +11,7 @@ pub mod shapes;
 pub mod textures;
 
 use env_logger;
-use tracer::App;
+use tracer::RustracerApp;
 
 use std::f64::consts::FRAC_PI_2;
 use std::f64::consts::FRAC_PI_4;
@@ -52,8 +53,8 @@ const SAMPLES_PER_PIXEL: u8 = 10;
 
 fn pbrt4_scene() -> Scene
 {
-    let camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
-    let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
+    let mut camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
+    let mut camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
 
     // Create new camera
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
@@ -68,6 +69,11 @@ fn pbrt4_scene() -> Scene
 
     if let Some(camera) = pbrt_scene.camera {
         println!("Camera: {:#?}", camera);
+        // TODO: Extract camera position from pbrt
+        // match camera.params {
+        //     Perspective(c) => {}
+        // }
+        // camera_position = camera.params.
     }
 
     if let Some(film) = pbrt_scene.film {
@@ -311,19 +317,21 @@ fn test_samplers() {
     log::info!("Sampler test: {:?}", film.file_name);
 }
 
+
 fn init_ui() -> Result<(), eframe::Error> {
-    let mut ctx = egui::Context::default();
+    let mut ctx = eframe::egui::Context::default();
 
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::Vec2 { x: 320.0, y: 240.0 }),
+        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([320.0, 240.0]),
         ..Default::default()
     };
 
     eframe::run_native(
-        "My app",
+        "Rustracer",
         options,
         Box::new(|creation_context| {
-            Box::<App>::default()
+            egui_extras::install_image_loaders(&creation_context.egui_ctx);
+            Box::<RustracerApp>::default()
         }),
     )
 }
@@ -335,11 +343,11 @@ fn main() {
 
     env_logger::init();
 
-    // let ui_result = init_ui();
-    // match ui_result {
-    //     Ok(_) => {}
-    //     Err(err) => log::error!("Failed to create ui with error {}", err)
-    // }
+    let ui_result = init_ui();
+    match ui_result {
+        Ok(_) => {}
+        Err(err) => log::error!("Failed to create ui with error {}", err)
+    }
 
     render();
     //test_samplers();
