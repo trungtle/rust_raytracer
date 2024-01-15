@@ -16,11 +16,11 @@ use crate::core::{
 };
 
 pub struct DirectLightingIntegrator {
-    pub scene: Scene,
+    pub scene: Arc<Scene>,
 }
 
 impl DirectLightingIntegrator {
-    pub fn new(scene: Scene) -> Self {
+    pub fn new(scene: Arc<Scene>) -> Self {
         Self {
             scene
         }

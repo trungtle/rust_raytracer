@@ -1,4 +1,5 @@
 extern crate math;
+use eframe::App;
 use eframe::egui::load::ImageLoader;
 use math::{Vec2, Vec3};
 
@@ -162,17 +163,6 @@ fn gltf_scene() -> Scene
                 Option::Some(
                     Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
 
-    // scene.add(
-    // Primitive::new(
-    //         Shape::Triangle(
-    //             Triangle::new(
-    //                 Vec3::new(-1., 0., -1.),
-    //                 Vec3::new(1., 0., -1.),
-    //                 Vec3::new(0., 1., -1.))),
-    //     Option::Some(
-    //         Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 0.0)))))));
-
-
     for mesh in g_data.doc.meshes() {
         for primitive in mesh.primitives() {
             let mesh = Mesh::from_gltf(&primitive, &g_data);
@@ -277,16 +267,11 @@ fn furnace_test() -> Scene
     return scene;
 }
 
-fn render() {
-    // Initialize scene
-    let scene = pbrt4_scene();
-
-    let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL);
-
+fn render(view: &View, scene: Arc<Scene>) {
     let mut integrator = DirectLightingIntegrator::new(scene);
 
     let start = Instant::now();
-    integrator.render(&view);
+    integrator.render(view);
     let duration = start.elapsed();
     log::info!("Render time: {:?}", duration);
 }
@@ -318,7 +303,7 @@ fn test_samplers() {
 }
 
 
-fn init_ui() -> Result<(), eframe::Error> {
+fn init_ui(app: Box<RustracerApp>) -> Result<(), eframe::Error> {
     let mut ctx = eframe::egui::Context::default();
 
     let options = eframe::NativeOptions {
@@ -331,7 +316,7 @@ fn init_ui() -> Result<(), eframe::Error> {
         options,
         Box::new(|creation_context| {
             egui_extras::install_image_loaders(&creation_context.egui_ctx);
-            Box::<RustracerApp>::default()
+            app
         }),
     )
 }
@@ -343,12 +328,20 @@ fn main() {
 
     env_logger::init();
 
-    let ui_result = init_ui();
+    let mut app = Box::<RustracerApp>::default();
+
+    let ui_result = init_ui(app);
     match ui_result {
         Ok(_) => {}
         Err(err) => log::error!("Failed to create ui with error {}", err)
     }
 
-    render();
+    // Initialize scene
+    let scene = pbrt4_scene();
+
+    let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL);
+    render(&view, Arc::new(scene));
+    //app.update_image = true;
+    //app.image_filepath = scene.persp_camera.film.file_path;
     //test_samplers();
 }

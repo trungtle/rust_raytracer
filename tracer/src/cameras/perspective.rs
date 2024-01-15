@@ -24,7 +24,7 @@ pub struct PerspectiveCamera {
     up: Vec3,
     forward: Vec3,
     right: Vec3,
-    film: Film,
+    pub film: Film,
 }
 
 impl PerspectiveCamera {
