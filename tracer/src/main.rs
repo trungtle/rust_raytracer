@@ -17,6 +17,7 @@ use tracer::RustracerApp;
 use std::f64::consts::FRAC_PI_2;
 use std::f64::consts::FRAC_PI_4;
 use std::f64::consts::PI;
+use std::ops::Deref;
 use std::{
     time::Instant,
     env,
@@ -267,11 +268,11 @@ fn furnace_test() -> Scene
     return scene;
 }
 
-fn render(view: &View, scene: Arc<Scene>) {
-    let mut integrator = DirectLightingIntegrator::new(scene);
+fn render(view: &View, scene: &mut Scene) {
+    let mut integrator = DirectLightingIntegrator::default();
 
     let start = Instant::now();
-    integrator.render(view);
+    integrator.render(view, scene);
     let duration = start.elapsed();
     log::info!("Render time: {:?}", duration);
 }
@@ -328,8 +329,7 @@ fn main() {
 
     env_logger::init();
 
-    let mut app = Box::<RustracerApp>::default();
-
+    let app = Box::<RustracerApp>::default();
     let ui_result = init_ui(app);
     match ui_result {
         Ok(_) => {}
@@ -337,11 +337,17 @@ fn main() {
     }
 
     // Initialize scene
-    let scene = pbrt4_scene();
+    let mut scene = pbrt4_scene();
+
 
     let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL);
-    render(&view, Arc::new(scene));
+    render(&view, &mut scene);
+
     //app.update_image = true;
     //app.image_filepath = scene.persp_camera.film.file_path;
     //test_samplers();
+
+
+
+
 }
