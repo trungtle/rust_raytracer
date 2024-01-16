@@ -29,7 +29,10 @@ impl eframe::App for RustracerApp {
                 ui.add(
                     egui::Image::new(self.image_filepath.clone()).rounding(10.0),
                 );                
-                ui.image(egui::include_image!("../../output/image-16-Jan-2024-19-59-36.png"));
+                egui::ImageSource::Bytes {
+                    uri: ::std::borrow::Cow::Borrowed(&*self.image_filepath),
+                    bytes: egui::load::Bytes::Static(&*std::fs::read(self.image_filepath.clone()).unwrap()),
+                };
             }
         });
     }
