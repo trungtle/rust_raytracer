@@ -12,7 +12,6 @@ pub struct Film {
     pub width: u32,
     pub height: u32,
     pub file_name: String,
-    pub file_path: String,
     pub pixels: Vec<Spectrum>,
 }
 
@@ -22,7 +21,6 @@ impl Film {
             width,
             height,
             file_name: String::from(file_name),
-            file_path: String::from(file_name),
             pixels: vec![Spectrum::ColorRGB(Vec3::from(0.)); width as usize * height as usize]
         }
     }
@@ -36,7 +34,7 @@ impl Film {
         self.pixels = pixels;
     }
 
-    pub fn write_image(&mut self) {
+    pub fn write_image(&self) {
         let now: DateTime<Utc> = Utc::now();
         log::info!("UTC now is: {}", now);
         let path_ppm_string = format!("output/{}-{}.ppm", self.file_name,now.format("%v-%H-%M-%S"));
@@ -75,8 +73,6 @@ impl Film {
             Ok(_) => log::info!("successfully wrote image to {}", path_png.display()),
             Err(why) => panic!("couldn't write image to {}: {}", path_png.display(), why),
         };
-
-        self.file_path = path_png_string.to_owned();
     }
 }
 

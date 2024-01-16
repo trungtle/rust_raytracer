@@ -267,13 +267,18 @@ fn furnace_test() -> Scene
     return scene;
 }
 
-fn render(view: &View, scene: Arc<Scene>) {
-    let mut integrator = DirectLightingIntegrator::new(scene);
+fn render(view: View, scene: Scene) {
+    let mut integrator = DirectLightingIntegrator::default();
+    let mut film = Film::new(view.width, view.height, "image");
 
     let start = Instant::now();
-    integrator.render(view);
+    let pixels = integrator.render(scene, view);
     let duration = start.elapsed();
     log::info!("Render time: {:?}", duration);
+
+    // Write to film
+    film.set_pixels(pixels);
+    film.write_image();
 }
 
 fn test_samplers() {
@@ -340,7 +345,7 @@ fn main() {
     let scene = pbrt4_scene();
 
     let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL);
-    render(&view, Arc::new(scene));
+    render(view, scene);
     //app.update_image = true;
     //app.image_filepath = scene.persp_camera.film.file_path;
     //test_samplers();

@@ -28,7 +28,8 @@ impl eframe::App for RustracerApp {
             if self.update_image {
                 ui.add(
                     egui::Image::new(self.image_filepath.clone()).rounding(10.0),
-                );
+                );                
+                ui.image(egui::include_image!("../../output/image-16-Jan-2024-19-59-36.png"));
             }
         });
     }
