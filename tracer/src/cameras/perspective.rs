@@ -24,7 +24,6 @@ pub struct PerspectiveCamera {
     up: Vec3,
     forward: Vec3,
     right: Vec3,
-    pub film: Film,
 }
 
 impl PerspectiveCamera {
@@ -61,8 +60,7 @@ impl PerspectiveCamera {
             up: up,
             lower_left: lower_left,
             horizontal: horizontal,
-            vertical: vertical,
-            film: Film::new(width, height, "image"),
+            vertical: vertical
         }
     }
 
@@ -70,17 +68,5 @@ impl PerspectiveCamera {
         let rp: Vec2 = self.aperture * sampler.sample_unit_disk();
         let offset: Vec3 = self.right * rp.x + self.up * rp.y;
         Ray::new(self.eye + offset, self.lower_left + uv.x * self.horizontal + uv.y * self.vertical - self.eye - offset)
-    }
-
-    pub fn set_pixel(&mut self, x:u32, y:u32, color: Spectrum) {
-        self.film.set_pixel(x, y, color);
-    }
-
-    pub fn set_pixels(&mut self, pixels: Vec<Spectrum> ) {
-        self.film.set_pixels(pixels);
-    }
-
-    pub fn write_film_to_file(&mut self) {
-        self.film.write_image();
     }
 }

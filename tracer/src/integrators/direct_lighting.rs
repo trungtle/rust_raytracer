@@ -12,16 +12,15 @@ use crate::core::{
     sampler::Sampler,
     scene::Scene,
     spectrum::Spectrum,
-    view::View
+    view::View,
+    film::Film
 };
 
-pub struct DirectLightingIntegrator {
-}
+pub struct DirectLightingIntegrator {}
 
 impl Default for DirectLightingIntegrator {
     fn default() -> Self {
-        Self {
-        }
+        Self{}
     }
 }
 
@@ -79,10 +78,8 @@ impl DirectLightingIntegrator {
         }
         Spectrum::ColorRGB(acc_color.clamp(0., 1.))
     }
-}
 
-impl DirectLightingIntegrator {
-    pub fn render(&mut self, view: &View, scene: &mut Scene, ) {
+    pub fn render(&mut self, scene: Scene, view: View) -> Vec<Spectrum> {
         let samples_per_pixel = view.samples_per_pixel;
         let single_thread = true;
 
@@ -99,7 +96,7 @@ impl DirectLightingIntegrator {
                     for _ in 0..samples_per_pixel {
                         let uv: Vec2 = sampler.sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
                         let mut ray = scene.persp_camera.get_ray(&uv, &mut sampler);
-                        let li = self.li(scene, &mut ray, &mut sampler);
+                        let li = self.li(&scene, &mut ray, &mut sampler);
                         match li {
                             Spectrum::ColorRGB(li) => total_spectrum = li + total_spectrum
                         }
@@ -140,7 +137,7 @@ impl DirectLightingIntegrator {
                     let uv: Vec2 = sampler.sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
 
                     let ray = scene.persp_camera.get_ray(&uv, &mut sampler);
-                    let Spectrum::ColorRGB(color) = self.li(scene, &ray, &mut sampler);
+                    let Spectrum::ColorRGB(color) = self.li(&scene, &ray, &mut sampler);
                     color
                 }).sum::<Vec3>();
 
@@ -151,8 +148,6 @@ impl DirectLightingIntegrator {
             };
 
         }
-        scene.persp_camera.set_pixels(pixels);
-        scene.persp_camera.write_film_to_file();
-
+        return pixels;
     }
 }

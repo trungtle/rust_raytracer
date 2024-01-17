@@ -268,18 +268,18 @@ fn furnace_test() -> Scene
     return scene;
 }
 
-fn render(view: &View, scene: &mut Scene) {
+fn render(view: View, scene: Scene) -> Vec<Spectrum> {
     let mut integrator = DirectLightingIntegrator::default();
 
     let start = Instant::now();
-    integrator.render(view, scene);
+    let pixels = integrator.render(scene, view);
     let duration = start.elapsed();
     log::info!("Render time: {:?}", duration);
+
+    return pixels;
 }
 
-fn test_samplers() {
-    let mut film = Film::new(SCREEN_WIDTH, SCREEN_HEIGHT, "image");
-
+fn test_samplers() -> Vec<Spectrum> {
     let num_pixels = SCREEN_WIDTH as usize * SCREEN_HEIGHT as usize;
     let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.0)); num_pixels];
 
@@ -297,10 +297,9 @@ fn test_samplers() {
         let linear_coords: usize = (point.y as u32 * film.width + point.x as u32) as usize;
         pixels[linear_coords] = color;
     }
-    film.set_pixels(pixels);
-    film.write_image();
 
     log::info!("Sampler test: {:?}", film.file_name);
+    return pixels;
 }
 
 
@@ -322,6 +321,17 @@ fn init_ui(app: Box<RustracerApp>) -> Result<(), eframe::Error> {
     )
 }
 
+fn load_image_from_path(path: &std::path::Path) -> Result<eframe::egui::ColorImage, image::ImageError> {
+    let image = image::io::Reader::open(path)?.decode()?;
+    let size = [image.width() as _, image.height() as _];
+    let image_buffer = image.to_rgba8();
+    let pixels = image_buffer.as_flat_samples();
+    Ok(eframe::epaint::ColorImage::from_rgba_unmultiplied(
+        size,
+        pixels.as_slice(),
+    ))
+}
+
 fn main() {
     // Set environment variables
     let key = "RUST_LOG";
@@ -329,24 +339,24 @@ fn main() {
 
     env_logger::init();
 
-    let app = Box::<RustracerApp>::default();
+    // Initialize scene
+    let scene = gltf_scene();
+    let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL);
+    let pixels = render(view, scene);
+    //let pixels = test_samplers();
+
+    // Write to film
+    let mut film = Film::new(SCREEN_WIDTH, SCREEN_HEIGHT, "image");
+    film.set_pixels(pixels);
+    let path = film.write_image();
+
+    let mut app = Box::<RustracerApp>::default();
+    app.image = Some(Arc::new(load_image_from_path(std::path::Path::new(&path)).unwrap()));
     let ui_result = init_ui(app);
     match ui_result {
         Ok(_) => {}
         Err(err) => log::error!("Failed to create ui with error {}", err)
     }
-
-    // Initialize scene
-    let mut scene = pbrt4_scene();
-
-
-    let view = View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL);
-    render(&view, &mut scene);
-
-    //app.update_image = true;
-    //app.image_filepath = scene.persp_camera.film.file_path;
-    //test_samplers();
-
 
 
 

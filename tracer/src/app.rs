@@ -1,10 +1,11 @@
-use eframe::egui::{self, ImageSource, TextureOptions, SizeHint, Image, load::ImageLoader};
+use std::sync::Arc;
+use eframe::{egui::{self, ImageSource, TextureOptions, SizeHint, Image, load::ImageLoader}, epaint::ColorImage};
 pub struct RustracerApp {
     name: String,
     width: f32,
     height: f32,
-    pub update_image: bool,
-    pub image_filepath: String,
+    texture: Option<egui::TextureHandle>,
+    pub image: Option<Arc<ColorImage>>,
 }
 
 impl Default for RustracerApp {
@@ -13,8 +14,8 @@ impl Default for RustracerApp {
             name: "Rustracer".to_owned(),
             width: 400.0,
             height: 400.0,
-            update_image: true,
-            image_filepath: "../../output/image-28-Oct-2023-22-28-03.png".to_owned(),
+            texture: None,
+            image: None,
         }
     }
 }
@@ -24,10 +25,13 @@ impl eframe::App for RustracerApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(self.name.clone());
             ui.label(format!("Hello '{}', width {}, height: {}", self.name, self.width, self.height));
-            if self.update_image {
-                ui.add(
-                    egui::Image::from_uri(self.image_filepath.clone()).rounding(10.0),
-                );
+            if let Some(image) = self.image.take() {
+                self.texture = Some(ctx.load_texture("image", image, Default::default()));
+            }
+
+
+            if let Some(texture) = self.texture.as_ref() {
+                ui.image((texture.id(), texture.size_vec2()));
             }
         });
     }
