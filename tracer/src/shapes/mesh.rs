@@ -1,13 +1,12 @@
 use gltf;
-use pbrt4;
-use math::{Vec2, Vec3};
+use math::{Vec3};
 
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
 use crate::loaders::gltf_loader::GData;
 use crate::shapes::triangle::Triangle;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Mesh {
     pub positions: Vec<Vec3>,
     pub indices: Vec<u32>

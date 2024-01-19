@@ -8,12 +8,11 @@ use crate::materials::Material;
 use crate::core::Transform;
 use crate::shapes::mesh::Mesh;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Primitive {
     pub shape: Shape,
     pub material: Option<Arc<dyn Material>>,
     transform: Transform
-
 }
 
 impl Primitive {

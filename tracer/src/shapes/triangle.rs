@@ -2,7 +2,7 @@ use math::{Vec2, Vec3};
 
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Triangle {
     pub v0: Vec3,
     pub v1: Vec3,

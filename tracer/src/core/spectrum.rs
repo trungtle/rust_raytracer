@@ -1,7 +1,7 @@
 use std::ops;
 use math::Vec3;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Spectrum {
     ColorRGB(Vec3)
 }

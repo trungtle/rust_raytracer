@@ -6,7 +6,7 @@ use crate::shapes::triangle::Triangle;
 
 use super::Transform;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Shape {
     Mesh(Mesh),
     Sphere(Sphere),

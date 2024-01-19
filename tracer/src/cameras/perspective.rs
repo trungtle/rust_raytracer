@@ -2,13 +2,11 @@ use std::f64::consts::PI;
 use math::{Vec2, Vec3};
 
 use crate::core::{
-    film::Film,
     ray::Ray,
     sampler::Sampler,
-    spectrum::Spectrum,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct PerspectiveCamera {
     width: u32, height: u32,
     eye: Vec3,

@@ -4,7 +4,7 @@ use math::{Vec2, Vec3};
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f64,

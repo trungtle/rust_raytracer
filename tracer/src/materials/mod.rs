@@ -1,7 +1,9 @@
-use math::Vec3;
 
 pub mod matte;
 pub mod pdf;
+
+use core::fmt::Debug;
+use math::Vec3;
 
 use crate::materials::{
     pdf::Pdf,
@@ -16,6 +18,19 @@ pub trait Material: Send + Sync {
         ray: &mut Ray, attenuation: &mut Spectrum, hit_point: &Vec3, hit_normal: &Vec3, sampler: &mut Sampler) -> bool;
 }
 
+impl Debug for dyn Material {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Spectrum{{{:?}}}", self.value())
+    }
+}
+
+impl PartialEq for dyn Material {
+    fn eq(&self, other: &Self) -> bool {
+        self.value() == other.value()
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
 pub struct ConstantMaterial {
     pub color: Spectrum
 }
@@ -41,6 +56,7 @@ impl Material for ConstantMaterial {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct MetalMaterial {
     pub color: Spectrum
 }
@@ -67,7 +83,7 @@ impl Material for MetalMaterial {
     }
 }
 
-#[derive(Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct LambertMaterial {
     pub color: Spectrum
 }

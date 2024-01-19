@@ -1,13 +1,11 @@
-use std::sync::Arc;
 use std::ops;
 
-use crate::math::{Float, Vec3, Mat4};
+use math::{Float, Vec3, Mat4};
 
-#[derive(Clone)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Transform {
     pub matrix: Mat4,
     pub matrix_inv: Mat4,
-    pub parent: Option<Arc<Transform>>
 }
 
 impl std::default::Default for Transform {
@@ -15,7 +13,6 @@ impl std::default::Default for Transform {
         Self {
             matrix: Mat4::identity(),
             matrix_inv: Mat4::identity(),
-            parent: None
         }
     }
 }
@@ -36,7 +33,6 @@ impl Transform {
         Self {
             matrix: mat,
             matrix_inv: mat,
-            parent: None
         }
     }
 
@@ -44,7 +40,6 @@ impl Transform {
         Self {
             matrix: Mat4::from_array(array),
             matrix_inv: Mat4::from_array(array),
-            parent: None
         }
     }
 

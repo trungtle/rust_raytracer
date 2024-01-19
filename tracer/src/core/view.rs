@@ -1,3 +1,4 @@
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct View {
     pub width: u32,
     pub height: u32,

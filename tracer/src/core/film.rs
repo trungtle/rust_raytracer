@@ -57,7 +57,7 @@ impl Film {
 
                 // TODO: Create an option to write either to ppm or png, but not both
                 image.push_str(&format!("{} {} {}\n", ir, ig, ib));
-                img_png.put_pixel(x, y, image::Rgb([ir, ig, ib]));
+                img_png.put_pixel(x, self.height - y - 1, image::Rgb([ir, ig, ib]));
             }
         }
 

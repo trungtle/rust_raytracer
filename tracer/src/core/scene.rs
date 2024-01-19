@@ -6,6 +6,7 @@ use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
 use crate::core::spectrum::Spectrum;
 
+#[derive(Clone, PartialEq, Debug)]
 pub struct Scene {
     pub primitives: Vec<Primitive>,
     pub environment_light: fn(&Ray) -> Spectrum,
