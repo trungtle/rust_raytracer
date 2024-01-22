@@ -2,7 +2,7 @@ use eframe::{egui::{self}, epaint::ColorImage};
 
 use math::{Vec2, Vec3};
 
-use std::f64::consts::FRAC_PI_2;
+use std::{f64::consts::FRAC_PI_2, path::Path};
 use std::{
     time::Instant,
     sync::Arc
@@ -40,6 +40,8 @@ const SAMPLES_PER_PIXEL: u8 = 10;
 
 fn pbrt4_scene() -> Scene
 {
+    use mesh_loader;
+
     let mut camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
     let mut camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
 
@@ -47,9 +49,11 @@ fn pbrt4_scene() -> Scene
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
     let mut scene = Scene::new(cam);
 
-    let path_pbrt = "assets/pbrt4/pbrt-book/book.pbrt";
-    log::info!("Loading scene: {}", &path_pbrt);
-    let pbrt_scene = pbrt4::Scene::from_file(&path_pbrt).unwrap();
+    let pbrt_filename = "book.pbrt";
+    let pbrt_relative_path = "assets/pbrt4/pbrt-book/";
+    let pbrt_filepath = pbrt_relative_path.to_string() + pbrt_filename;
+    log::info!("Loading scene: {}", &pbrt_filepath);
+    let pbrt_scene = pbrt4::Scene::from_file(&pbrt_filepath).unwrap();
 
 
     println!("Global options: {:#?}", pbrt_scene.options);
@@ -99,6 +103,15 @@ fn pbrt4_scene() -> Scene
 
     for shape in pbrt_scene.shapes {
         println!("Shape: {:#?}", shape);
+        let mut ply_path = project_root::get_project_root().unwrap();
+        ply_path.push(Path::new(pbrt_relative_path));
+        let _ = match shape.params {
+            pbrt4::types::Shape::PlyMesh { filename } => {
+                ply_path.push(Path::new(&filename[1..filename.len()-1]));
+                let mesh = Mesh::from_ply(&ply_path);
+            },
+            _ => {}
+        };
     }
 
     println!("Done");
@@ -271,7 +284,8 @@ use strum_macros::{EnumIter, Display};
 enum SceneOption {
     Spheres,
     Truck,
-    FurnaceTest
+    FurnaceTest,
+    Pbrt4
 }
 
 pub struct RustracerApp {
@@ -359,7 +373,8 @@ impl eframe::App for RustracerApp {
                 self.scene = match self.scene_option {
                     SceneOption::Spheres => { raytracing_weekend_scene() },
                     SceneOption::Truck => { gltf_scene() },
-                    SceneOption::FurnaceTest => { furnace_test() }
+                    SceneOption::FurnaceTest => { furnace_test() },
+                    SceneOption::Pbrt4 => { pbrt4_scene() }
                 };
 
                 let pixels = render(self.view, self.scene.clone());

@@ -1,10 +1,10 @@
-use std::env;
-use std::fs::File;
+use std::fmt::Error;
+use std::{fs::File, default};
 use std::io;
-use std::io::{BufRead, BufReader, Read};
+use std::io::BufRead;
 use std::path::Path;
-use std::collections::HashMap;
-use test_log::test;
+use ply_rs::{parser, ply::{self, KeyMap, Property}};
+
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where P: AsRef<Path>, {
@@ -12,19 +12,16 @@ where P: AsRef<Path>, {
     Ok(io::BufReader::new(file).lines())
 }
 
-fn read() {
-    let mut ply_format: HashMap<String, String> = HashMap::new();
-    //ply_format.insert(k, v)
 
-    let path_string = "../assets/pbrt4/pbrt-book/geometry/mesh_00001.ply";
-    if let Ok(lines) = read_lines(path_string) {
-        for line in lines {
-            if let Ok(ip) = line {
-                println!("{}", ip);
-
-            }
+pub fn parse_ply(path: &std::path::Path) -> Result<ply::Ply<ply::DefaultElement>, Error> {
+    let _ = match File::open(path) {
+        Ok(mut file) => {
+            let ply_parser = parser::Parser::<ply::DefaultElement>::new();
+            Ok(ply_parser.read_ply(&mut file))
         }
-    }
+        Err(e) => Err(e)
+    };
+    Err(Error)
 }
 
 #[cfg(test)]
@@ -33,9 +30,9 @@ mod tests {
 
     #[test_log::test]
     fn test_open_ply() {
-        let path = env::current_dir().unwrap();
+        let path = std::env::current_dir().unwrap();
         println!("The current directory is {}", path.display());
-
-        read();
+        let filename = std::path::Path::new("../assets/pbrt4/pbrt-book/geometry/mesh_00001.ply");
+        let result = parse_ply(filename);
     }
 }

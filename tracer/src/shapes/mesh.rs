@@ -1,5 +1,7 @@
 use gltf;
 use math::{Vec3};
+use ply_rs::ply::{self, KeyMap, PropertyAccess};
+use log::info;
 
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
@@ -25,6 +27,22 @@ impl Mesh {
 
     //     shape.params
     // }
+
+    pub fn from_ply(filepath: &std::path::Path) {
+        info!("Parse ply model file path {:?}", filepath.to_str());
+        let ply_model = mesh_loader::parse_ply(filepath);
+        match ply_model
+        {
+            Ok(mut ply_model) => {
+                for entry in ply_model.payload.entries().into_iter() {
+                    println!("K: {}, V: {:?}", entry.key(), entry.get().first() );
+                }
+            },
+            Err(e) => {
+                println!("Error: {}", e);
+            }
+        }
+    }
 
     pub fn from_gltf(g_primitive: &gltf::Primitive, g_data: &GData) -> Self {
         let mut positions: Vec<Vec3> = vec![];
