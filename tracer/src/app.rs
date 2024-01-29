@@ -2,7 +2,7 @@ use eframe::{egui::{self}, epaint::ColorImage};
 
 use math::{Vec2, Vec3};
 
-use std::{f64::consts::FRAC_PI_2, path::Path};
+use std::{f64::consts::FRAC_PI_2, path::{Path, PathBuf}};
 use std::{
     time::Instant,
     sync::Arc
@@ -103,7 +103,7 @@ fn pbrt4_scene() -> Scene
 
     for shape in pbrt_scene.shapes {
         println!("Shape: {:#?}", shape);
-        let mut ply_path = project_root::get_project_root().unwrap();
+        let mut ply_path = PathBuf::from("E:/CODES/rust_raytracer/");
         ply_path.push(Path::new(pbrt_relative_path));
         let _ = match shape.params {
             pbrt4::types::Shape::PlyMesh { filename } => {
