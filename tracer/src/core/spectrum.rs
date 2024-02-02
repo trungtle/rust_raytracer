@@ -6,6 +6,12 @@ pub enum Spectrum {
     ColorRGB(Vec3)
 }
 
+impl Default for Spectrum {
+    fn default() -> Self {
+        Spectrum::ColorRGB(Vec3::default())
+    }
+}
+
 impl Spectrum {
     pub fn clamp(&self, min: f64, max: f64) -> Vec3 {
         match self {

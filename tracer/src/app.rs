@@ -8,16 +8,18 @@ use std::{
     sync::Arc
 };
 
-use crate::core::{
+use log::info;
+
+use crate::{core::{
     film::Film,
     primitive::Primitive,
     sampler,
     scene::Scene,
     shape::Shape,
     spectrum::Spectrum,
-    transform::Transform,
+    transform::{self, Transform},
     view::View
-};
+}, integrators::direct_lighting::RenderSettings};
 
 use crate::shapes::{
     mesh::Mesh,
@@ -33,21 +35,20 @@ use crate::materials::{
 use crate::cameras::perspective::PerspectiveCamera;
 use crate::integrators::direct_lighting::DirectLightingIntegrator;
 
-const SCREEN_WIDTH: u32 = 400;
-const SCREEN_HEIGHT: u32 = 400;
-const SAMPLES_PER_PIXEL: u8 = 10;
+const SCREEN_WIDTH: u32 = 100;
+const SCREEN_HEIGHT: u32 = 100;
+const SAMPLES_PER_PIXEL: u8 = 1;
 
 
 fn pbrt4_scene() -> Scene
 {
-    use mesh_loader;
-
-    let mut camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
-    let mut camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
+    let camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
+    let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
 
     // Create new camera
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
-    let mut scene = Scene::new(cam);
+    let mut scene = Scene::default();
+    scene.persp_camera = cam;
 
     let pbrt_filename = "book.pbrt";
     let pbrt_relative_path = "assets/pbrt4/pbrt-book/";
@@ -138,12 +139,10 @@ fn pbrt4_scene() -> Scene
 
 fn gltf_scene() -> Scene
 {
-    let camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
+    let mut camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
     let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
 
-    // Create new camera
-    let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
-    let mut scene = Scene::new(cam);
+    let mut scene = Scene::default();
 
     scene.environment_light = |ray| -> Spectrum {
         let t = 0.5 * ray.direction.y + 1.0;
@@ -156,23 +155,46 @@ fn gltf_scene() -> Scene
     let g_data = crate::loaders::gltf_loader::load_gltf("assets/glTF/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
 
     // Floor
-    scene.add(
-        Primitive::new(
-                Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
-                Option::Some(
-                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
+    // scene.add(
+    //     Primitive::new(
+    //             Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
+    //             Option::Some(
+    //                 Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
 
-    for mesh in g_data.doc.meshes() {
-        for primitive in mesh.primitives() {
-            let mesh = Mesh::from_gltf(&primitive, &g_data);
-            let mut primitive = Primitive::new(Shape::Mesh(mesh), Option::Some(Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))));
-            //primitive.apply_transform(Transform::translate(Vec3 { x: 0.0, y: 1.0, z: 0.0 }));
-            //primitive.apply_transform(Transform::rotate_x(PI));
-            let mut transform = Transform::rotate_x(FRAC_PI_2);
-            // transform = transform * Transform::scale(Vec3 { x: 3.0, y: 3.0, z: 3.0 });
-            primitive.apply_transform(transform);
-            scene.add(primitive);
-        }
+    for node in g_data.doc.nodes() {
+        match node.transform() {
+            gltf::scene::Transform::Matrix { matrix } => {}
+            gltf::scene::Transform::Decomposed { translation, rotation, scale } => {
+                let translation = Vec3::new(translation[0] as f64, translation[1] as f64, translation[2] as f64);
+                let rotation = Vec3::new(rotation[0] as f64, rotation[1] as f64, rotation[2] as f64);
+                let scale = Vec3::new(scale[0] as f64, scale[1] as f64, scale[2] as f64);
+
+                if let Some(mesh) = node.mesh() {
+                    info!("Node: {:?} - Mesh: {:?} - Transform: {:?}", node.name(), mesh.name(), node.transform());
+                    for primitive in mesh.primitives() {
+                        let mesh = Mesh::from_gltf(&primitive, &g_data);
+                        let mut primitive = Primitive::new(Shape::Mesh(mesh), 
+                            Option::Some(
+                                Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.5, 0.5))))));
+                        let transform = Transform::new(translation, rotation, scale);
+                        info!("-- {:?}, {:?}, {:?}", translation, rotation, scale);
+                        primitive.apply_transform(transform);
+                        scene.add(primitive);        
+                    }
+                }
+                else if let Some(_) = node.camera() {
+                    camera_position = translation;
+                }
+            }
+        };
+    }
+
+    let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
+    scene.persp_camera = cam;
+
+
+    for image in g_data.images {
+        
     }
 
     return scene;
@@ -185,7 +207,8 @@ fn raytracing_weekend_scene() -> Scene
 
     // Create new camera
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
-    let mut scene = Scene::new(cam);
+    let mut scene = Scene::default();
+    scene.persp_camera = cam;
 
     scene.environment_light = |ray| -> Spectrum {
         let t = 0.5 * ray.direction.y + 1.0;
@@ -230,7 +253,8 @@ fn furnace_test() -> Scene
 
     // Create new camera
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
-    let mut scene = Scene::new(cam);
+    let mut scene = Scene::default();
+    scene.persp_camera = cam;
 
     scene.environment_light = |_ray| -> Spectrum {
         Spectrum::ColorRGB(Vec3 { x: 0.5, y: 0.5, z: 0.5 })
@@ -266,11 +290,11 @@ fn furnace_test() -> Scene
     return scene;
 }
 
-fn render(view: View, scene: Scene) -> Vec<Spectrum> {
+fn render(view: View, scene: Scene, settings: RenderSettings) -> Vec<Spectrum> {
     let mut integrator = DirectLightingIntegrator::default();
 
     let start = Instant::now();
-    let pixels = integrator.render(scene, view);
+    let pixels = integrator.render(scene, view, settings);
     let duration = start.elapsed();
     log::info!("Render time: {:?}", duration);
 
@@ -297,7 +321,8 @@ pub struct RustracerApp {
     pub image: Option<Arc<ColorImage>>,
     scene_option: SceneOption,
     view: View,
-    scene: Scene
+    scene: Scene,
+    render_settings: RenderSettings
 }
 
 impl Default for RustracerApp {
@@ -311,7 +336,8 @@ impl Default for RustracerApp {
             image: None,
             scene_option: SceneOption::Spheres,
             view: View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL),
-            scene: raytracing_weekend_scene()
+            scene: raytracing_weekend_scene(),
+            render_settings: RenderSettings { single_thread: false }
         }
     }
 }
@@ -367,6 +393,7 @@ impl eframe::App for RustracerApp {
             );
 
             ui.add(egui::Slider::new(&mut self.sample_per_pixel, 1..=100).text("Samples per pixels"));
+            ui.add(egui::Checkbox::new(&mut self.render_settings.single_thread, "Single thread"));
 
             if ui.add(egui::Button::new("Render")).clicked() {
                 self.view = View::new(self.width, self.height, self.sample_per_pixel);
@@ -377,7 +404,7 @@ impl eframe::App for RustracerApp {
                     SceneOption::Pbrt4 => { pbrt4_scene() }
                 };
 
-                let pixels = render(self.view, self.scene.clone());
+                let pixels = render(self.view, self.scene.clone(), self.render_settings.clone());
                 //let pixels = test_samplers();
                 // Write to film
                 let mut film = Film::new(SCREEN_WIDTH, SCREEN_HEIGHT, "image");

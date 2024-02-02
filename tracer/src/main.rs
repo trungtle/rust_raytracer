@@ -2,8 +2,6 @@ use env_logger;
 use tracer::RustracerApp;
 
 fn init_ui(app: Box<RustracerApp>) -> Result<(), eframe::Error> {
-    let mut ctx = eframe::egui::Context::default();
-
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default().with_inner_size([320.0, 240.0]),
         ..Default::default()
@@ -27,11 +25,11 @@ fn main() {
 
     env_logger::init();
 
-    let mut app = Box::<RustracerApp>::default();
+    let app = Box::<RustracerApp>::default();
     let ui_result = init_ui(app);
     match ui_result {
         Ok(_) => {}
-        Err(err) => log::error!("Failed to create ui with error {}", err)
+        Err(err) => log::error!("Failed to create app with error {}", err)
     }
 
 

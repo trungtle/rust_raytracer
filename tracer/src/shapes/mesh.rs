@@ -1,6 +1,5 @@
 use gltf;
-use math::{Vec3};
-use ply_rs::ply::{self, KeyMap, PropertyAccess};
+use math::{Vec2, Vec3};
 use log::info;
 
 use crate::core::interaction::SurfaceInteraction;
@@ -10,14 +9,17 @@ use crate::shapes::triangle::Triangle;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Mesh {
+    pub indices: Vec<u32>,
     pub positions: Vec<Vec3>,
-    pub indices: Vec<u32>
+    pub uv: Vec<Vec2>
 }
 
 impl Mesh {
     pub fn new(positions: Vec<Vec3>, indices: Vec<u32>) -> Self {
         Self {
-            positions, indices
+            indices: indices, 
+            positions: positions, 
+            uv: Vec::new()
         }
     }
 
@@ -44,12 +46,22 @@ impl Mesh {
         }
     }
 
-    pub fn from_gltf(g_primitive: &gltf::Primitive, g_data: &GData) -> Self {
+    pub fn from_gltf(primitive: &gltf::Primitive, data: &GData) -> Self {
+        use gltf::mesh::util::ReadTexCoords::{U8, U16, F32};
+
         let mut positions: Vec<Vec3> = vec![];
         let mut indices: Vec<u32> = vec![];
+        let mut uv: Vec<Vec2> = vec![];
 
+        let reader = primitive.reader(|buffer| Some(&data.buffers[buffer.index()]));
+
+        // Indices
+        if let Some(iter) = reader.read_indices() {
+            for index in iter.into_u32() {
+                indices.push(index);
+            }
+        }
         // Positions
-        let reader = g_primitive.reader(|buffer| Some(&g_data.buffers[buffer.index()]));
         if let Some(iter) = reader.read_positions() {
             for vertex_position in iter {
                 let x = vertex_position[0] as f64;
@@ -59,16 +71,38 @@ impl Mesh {
             }
         }
 
-        // Indices
-        if let Some(iter) = reader.read_indices() {
-            for index in iter.into_u32() {
-                indices.push(index);
+        // UVs
+        // TODO: Need to read from multiple UVs sets
+        if let Some(read_tex_coords) = reader.read_tex_coords(0) {
+            match read_tex_coords {                
+                U8(iter)=> {
+                    for _uv in iter {
+                        let u = _uv[0] as f64;
+                        let v = _uv[1] as f64;
+                        uv.push(Vec2::new(u, v));
+                    }        
+                }
+                U16(iter) => {
+                    for _uv in iter {
+                        let u = _uv[0] as f64;
+                        let v = _uv[1] as f64;
+                        uv.push(Vec2::new(u, v));
+                    }        
+                }
+                F32(iter) => {
+                    for _uv in iter {
+                        let u = _uv[0] as f64;
+                        let v = _uv[1] as f64;
+                        uv.push(Vec2::new(u, v));
+                    }        
+                }
             }
-        }
+        }    
 
         Self {
-            positions,
-            indices
+            indices: indices,
+            positions: positions,
+            uv: uv
         }
     }
 

@@ -13,15 +13,17 @@ pub struct Scene {
     pub persp_camera: PerspectiveCamera,
 }
 
-impl Scene {
-    pub fn new(persp_camera: PerspectiveCamera) -> Self {
+impl Default for Scene {
+    fn default() -> Self {
         Self {
-            primitives: Vec::new(),
-            environment_light: |ray| Spectrum::ColorRGB(Vec3::from(0.)),
-            persp_camera
+            primitives: Vec::default(),
+            environment_light: |_| Spectrum::ColorRGB(Vec3::from(0.)),
+            persp_camera: PerspectiveCamera::default()
         }
     }
+}
 
+impl Scene {
     pub fn add(&mut self, primitive: Primitive) {
         self.primitives.push(primitive);
     }

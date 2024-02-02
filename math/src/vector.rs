@@ -1,4 +1,4 @@
-use std::ops;
+use std::{default, ops};
 use std::ops::{Index, IndexMut};
 use crate::types::Float;
 use super::tuple::{Tuple2d, Tuple3d, Tuple4d};
@@ -19,6 +19,12 @@ pub struct Vec3 {
     pub x: Float,
     pub y: Float,
     pub z: Float
+}
+
+impl Default for Vec3 {
+    fn default() -> Self {
+        Vec3::zero()
+    }
 }
 
 impl Vec3 {
@@ -293,7 +299,7 @@ impl std::iter::Sum for Vec3 {
 // ----------------------------------------------------------------------------
 // VEC2
 // ----------------------------------------------------------------------------
-#[derive(Copy, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Vec2 {
     pub x: Float,
     pub y: Float
