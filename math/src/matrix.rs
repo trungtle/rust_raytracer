@@ -1,5 +1,4 @@
 use std::ops;
-use std::ops::Mul;
 
 use crate::{Numeric, Float};
 use crate::Vector3;
@@ -11,20 +10,23 @@ pub struct SquareMatrix<T, const N: usize>
     pub m: [[T; N]; N]
 }
 
-pub type Matrix4<T: Numeric> = SquareMatrix<T, 4>;
+pub type Matrix4<T> = SquareMatrix<T, 4>;
 
-impl Matrix4<Float> {
-    pub fn identity() -> Self {
+impl<T> From<T> for Matrix4<T> 
+    where T: Numeric {
+    fn from(value: T) -> Self {
         let mut matrix = Self {
-            m: [[0.0; 4]; 4]
+            m: [[T::default(); 4]; 4]
         };
         for i in 0..4 {
-            matrix.m[i][i] = 1.0;
+            matrix.m[i][i] = value;
         }
         return matrix;
     }
+}
 
-    pub fn from_quat(quat: Quaternion<Float>) -> Self {
+impl From<&Quaternion<Float>> for Matrix4<Float> {
+    fn from(quat: &Quaternion<Float>) -> Self {
         let mut matrix = SquareMatrix::identity();
 
         let q0 = quat.x;
@@ -53,25 +55,35 @@ impl Matrix4<Float> {
 
         return matrix;
     }
+}
 
+impl Matrix4<Float> {
+    pub fn identity() -> Self {
+        let mut matrix = Self {
+            m: [[0.0; 4]; 4]
+        };
+        for i in 0..4 {
+            matrix.m[i][i] = 1.0;
+        }
+        return matrix;
+    }
+}
+
+impl<T> Default for Matrix4<T>
+    where T: Numeric {
+    fn default() -> Self {
+        Self {
+            m: [[T::default(); 4]; 4]
+        }
+    }    
 }
 
 impl<T> Matrix4<T>
-    where T: Numeric + Mul<T> {
+    where T: Numeric {
     pub fn zero() -> Self {
         Self {
             m: [[T::default(); 4]; 4]
         }
-    }
-
-    pub fn from(value: T) -> Self {
-        let mut matrix = Self {
-            m: [[T::default(); 4]; 4]
-        };
-        for i in 0..4 {
-            matrix.m[i][i] = value;
-        }
-        return matrix;
     }
 
     pub fn from_array(value: [[T; 4]; 4]) -> Self {

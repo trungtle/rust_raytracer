@@ -1,5 +1,5 @@
 use std::ops;
-use math::Vec3;
+use math::{Float, Vec3};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Spectrum {
@@ -13,13 +13,13 @@ impl Default for Spectrum {
 }
 
 impl Spectrum {
-    pub fn clamp(&self, min: f64, max: f64) -> Vec3 {
+    pub fn clamp(&self, min: Float, max: Float) -> Vec3 {
         match self {
             Spectrum::ColorRGB(spectrum ) => spectrum.clamp(min, max)
         }
     }
 
-    pub fn dot(s1: Spectrum, s2: Spectrum) -> f64 {
+    pub fn dot(s1: Spectrum, s2: Spectrum) -> Float {
         match s1 {
             Spectrum::ColorRGB(v1) => {
                 match s2 {
@@ -84,17 +84,17 @@ impl ops::Mul<Spectrum> for Spectrum {
     }
 }
 
-impl ops::Mul<f64> for Spectrum {
+impl ops::Mul<Float> for Spectrum {
     type Output = Spectrum;
 
-    fn mul(self, _rhs: f64) -> Self::Output {
+    fn mul(self, _rhs: Float) -> Self::Output {
         match self {
             Spectrum::ColorRGB(spectrum) => Spectrum::ColorRGB(spectrum.mul(_rhs))
         }
     }
 }
 
-impl ops::Mul<Spectrum> for f64 {
+impl ops::Mul<Spectrum> for Float {
     type Output = Spectrum;
 
     fn mul(self, _rhs: Spectrum) -> Self::Output {
@@ -104,10 +104,10 @@ impl ops::Mul<Spectrum> for f64 {
     }
 }
 
-impl ops::Div<f64> for Spectrum {
+impl ops::Div<Float> for Spectrum {
     type Output = Spectrum;
 
-    fn div(self, _rhs: f64) -> Self::Output {
+    fn div(self, _rhs: Float) -> Self::Output {
         match self {
             Spectrum::ColorRGB(spectrum) => Spectrum::ColorRGB(spectrum.div(_rhs))
         }

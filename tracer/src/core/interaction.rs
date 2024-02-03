@@ -1,9 +1,9 @@
-use math::{Vec2, Vec3};
+use math::{Float, Vec2, Vec3};
 
 use crate::core::primitive::Primitive;
 
 pub struct SurfaceInteraction {
-    pub t: f64,
+    pub t: Float,
     pub hit_point: Vec3,
     pub hit_normal: Vec3,
     pub hit_uv: Vec2,

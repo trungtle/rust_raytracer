@@ -29,7 +29,7 @@ impl ONB {
         axes[2] = w.normalize();
 
         // pick a vector not parallel to n
-        let a = if axes[2].x.abs() > 0.9 { Vec3::new(0., 1., 0.) } else { Vec3::new(1., 0., 0.) };
+        let a = if axes[2].x.abs() > 0.9 { Vec3 { x: 0., y: 1., z: 0. } } else { Vec3 {x: 1., y: 0., z: 0.} };
         axes[1] = Vec3::cross(axes[2], a);
         axes[0] = Vec3::cross(axes[2], axes[1]);
 

@@ -1,10 +1,9 @@
-use std::ops::{self, Neg};
-use std::ops::{Index, IndexMut};
+use std::ops::{self, Index, IndexMut};
 
 use crate::Float;
 
-use super::{Floating, Numeric};
-use super::tuple::{Tuple2d, Tuple3d, Tuple4d};
+use crate::{Floating, Numeric};
+use crate::tuple::{Tuple2d, Tuple3d, Tuple4d};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Vector {
@@ -28,8 +27,31 @@ impl<T> Default for Vector3<T>
     }
 }
 
-impl<T> Vector3<T>
+impl<T> From<T> for Vector3<T> 
     where T: Numeric {
+    fn from(value: T) -> Self {
+        Vector3 {
+            x: value,
+            y: value,
+            z: value
+        }
+    }
+}
+
+impl<T> From<&[T; 3]> for Vector3<T> 
+    where T: Numeric {
+    fn from(value: &[T; 3]) -> Self {
+        Vector3 {
+            x: value[0],
+            y: value[1],
+            z: value[2]
+        }
+    }
+}
+
+
+impl<T> Vector3<T>
+    where T: Numeric {    
     pub fn zero() -> Self {
         Self { x: T::default(), y: T::default(), z: T::default() }
     }
@@ -44,30 +66,33 @@ impl<T> Vector3<T>
 
 impl<T> Vector3<T>
     where T: Floating {
-    pub fn new(v: &[T; 3]) -> Self {
+    pub fn new(x: T, y: T, z: T) -> Self {
         Self {
-            x: v[0], y: v[1], z: v[2]
+            x, y, z
         }
     }
 }
 
-impl Vector3<Float> {
-    pub fn sqrt(v: Vector3<Float>) -> Vector3<Float> {
+impl<T> Vector3<T> 
+    where T: Floating {
+    pub fn sqrt(v: Vector3<T>) -> Vector3<T> {
         Vector3 {
-            x: Float::sqrt(v.x),
-            y: Float::sqrt(v.y),
-            z: Float::sqrt(v.z)
+            x: T::sqrt(v.x),
+            y: T::sqrt(v.y),
+            z: T::sqrt(v.z)
         }
     }
 
-    pub fn length(&self) -> Float {
-        Float::sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
+    pub fn length(&self) -> T {
+        T::sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
     }
 
-    pub fn length2(&self) -> Float {
+    pub fn length2(&self) -> T {
         self.x*self.x + self.y*self.y + self.z*self.z
-    }
+    }    
+}
 
+impl Vector3<Float> {
     pub fn normalize(&self) -> Vector3<Float> {
         let len_inv = 1.0 / self.length();
         Vector3 {
@@ -107,17 +132,6 @@ impl Vector3<Float> {
     }
 }
 
-// ----------------------------------------------------------------------------
-// Conversion from other types
-// ----------------------------------------------------------------------------
-impl<T> From<T> for Vector3<T>
-    where T: Numeric{
-    fn from(item: T) -> Self {
-        Vector3 {
-            x: item, y: item, z: item
-        }
-    }
-}
 
 // ----------------------------------------------------------------------------
 // Operator overloading
@@ -154,7 +168,7 @@ impl ops::Neg for Vector3<Float> {
 
     fn neg(self) -> Self::Output {
         Self {
-            x: self.x().neg(),
+            x: -self.x,
             y: -self.y,
             z: -self.z
         }
@@ -228,6 +242,18 @@ impl<T> ops::SubAssign<Vector3<T>> for Vector3<T>
             y: self.y - other.y,
             z: self.z - other.z
         };
+    }
+}
+
+impl ops::Mul<Vector3<Float>> for Float {
+    type Output = Vector3<Float>;
+
+    fn mul(self, _rhs: Vector3<Float>) -> Self::Output {
+        Vector3 {
+            x: self * _rhs.x,
+            y: self * _rhs.y,
+            z: self * _rhs.z,
+        }
     }
 }
 
@@ -358,6 +384,17 @@ impl<T> From<T> for Vector2<T>
 // ----------------------------------------------------------------------------
 // Operator overloading
 // ----------------------------------------------------------------------------
+impl ops::Mul<Vector2<Float>> for Float {
+    type Output = Vector2<Float>;
+
+    fn mul(self, _rhs: Vector2<Float>) -> Self::Output {
+        Vector2 {
+            0: self * _rhs.0,
+            1: self * _rhs.1,
+        }
+    }
+}
+
 impl ops::Neg for Vector2<Float> {
     type Output = Self;
 
@@ -365,6 +402,7 @@ impl ops::Neg for Vector2<Float> {
         Vector2 { 0: -self.x(), 1: -self.y() }
     }
 }
+
 
 impl<T> ops::Add<Vector2<T>> for Vector2<T>
     where T: Numeric {

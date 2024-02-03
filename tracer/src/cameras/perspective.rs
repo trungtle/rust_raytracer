@@ -1,5 +1,4 @@
-use std::f64::consts::PI;
-use math::{Vec2, Vec3};
+use math::{Float, Vec2, Vec3};
 
 use crate::core::{
     ray::Ray,
@@ -11,10 +10,10 @@ pub struct PerspectiveCamera {
     width: u32, height: u32,
     eye: Vec3,
     look_at: Vec3,
-    vfov: f64,
-    aspect: f64,
-    aperture: f64,
-    focus_dist: f64,
+    vfov: Float,
+    aspect: Float,
+    aperture: Float,
+    focus_dist: Float,
 
     lower_left: Vec3,
     horizontal: Vec3,
@@ -53,7 +52,7 @@ impl PerspectiveCamera {
         let vfov = 40.;
         let aspect = 1.;
 
-        let theta = vfov * PI / 180.;
+        let theta = vfov * std::f32::consts::PI / 180.;
         let half_height = (theta * 0.5).tan();
         let half_width = half_height * aspect;
 
@@ -85,7 +84,7 @@ impl PerspectiveCamera {
 
     pub fn get_ray(&self, uv: &Vec2, sampler: &mut Sampler) -> Ray {
         let rp: Vec2 = self.aperture * sampler.sample_unit_disk();
-        let offset: Vec3 = self.right * rp.x + self.up * rp.y;
-        Ray::new(self.eye + offset, self.lower_left + uv.x * self.horizontal + uv.y * self.vertical - self.eye - offset)
+        let offset: Vec3 = self.right * rp.0 + self.up * rp.1;
+        Ray::new(self.eye + offset, self.lower_left + uv.0 * self.horizontal + uv.1 * self.vertical - self.eye - offset)
     }
 }

@@ -1,5 +1,5 @@
 use gltf;
-use math::{Vec2, Vec3};
+use math::{Float, Vec2, Vec3};
 use log::info;
 
 use crate::core::interaction::SurfaceInteraction;
@@ -61,41 +61,39 @@ impl Mesh {
                 indices.push(index);
             }
         }
+
         // Positions
         if let Some(iter) = reader.read_positions() {
             for vertex_position in iter {
-                let x = vertex_position[0] as f64;
-                let y = vertex_position[1] as f64;
-                let z = vertex_position[2] as f64;
-                positions.push(Vec3::new(x, y, z));
+                positions.push(Vec3::from(&vertex_position));
             }
         }
 
         // UVs
         // TODO: Need to read from multiple UVs sets
         if let Some(read_tex_coords) = reader.read_tex_coords(0) {
-            match read_tex_coords {                
-                U8(iter)=> {
+            match read_tex_coords {       
+                // NOTE: Can we just convert from U8, U16 into float like this?         
+                U8(iter) => {
                     for _uv in iter {
-                        let u = _uv[0] as f64;
-                        let v = _uv[1] as f64;
-                        uv.push(Vec2::new(u, v));
+                        let u = _uv[0] as Float;
+                        let v = _uv[1] as Float;
+                        uv.push(Vec2::new(&[u, v]));
                     }        
-                }
+                },
                 U16(iter) => {
                     for _uv in iter {
-                        let u = _uv[0] as f64;
-                        let v = _uv[1] as f64;
-                        uv.push(Vec2::new(u, v));
+                        let u = _uv[0] as Float;
+                        let v = _uv[1] as Float;
+                        uv.push(Vec2::new(&[u, v]));
                     }        
-                }
+                },
                 F32(iter) => {
                     for _uv in iter {
-                        let u = _uv[0] as f64;
-                        let v = _uv[1] as f64;
-                        uv.push(Vec2::new(u, v));
+                        uv.push(Vec2::new(&_uv));
                     }        
-                }
+                },
+                _ => {}
             }
         }    
 

@@ -1,6 +1,6 @@
 use eframe::{egui::{self}, epaint::ColorImage};
 
-use math::{Vec2, Vec3, Quaternion};
+use math::{Float, Quaternion, Vec2, Vec3};
 
 use std::{f64::consts::FRAC_PI_2, path::{Path, PathBuf}};
 use std::{
@@ -162,11 +162,11 @@ fn gltf_scene() -> Scene
     //                 Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
 
     for node in g_data.doc.nodes() {
-        match node.transform() {
+        match &node.transform() {
             gltf::scene::Transform::Matrix { matrix } => {}
             gltf::scene::Transform::Decomposed { translation, rotation, scale } => {
-                let translation = Vec3::new(translation[0] as f64, translation[1] as f64, translation[2] as f64);
-                let scale = Vec3::new(scale[0] as f64, scale[1] as f64, scale[2] as f64);
+                let translation = Vec3::from(translation);
+                let scale = Vec3::from(scale);
 
                 if let Some(mesh) = node.mesh() {
                     info!("Node: {:?} - Mesh: {:?} - Transform: {:?}", node.name(), mesh.name(), node.transform());
@@ -175,10 +175,10 @@ fn gltf_scene() -> Scene
                         let mut primitive = Primitive::new(Shape::Mesh(mesh),
                             Option::Some(
                                 Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.5, 0.5))))));
-                        let quat = Quaternion::<f32>::new(rotation);
-                        let rot_mat = math::Mat4::from_quat(quat);
+                        let quat = Quaternion::<Float>::from(rotation);
+                        let rot_mat = math::Mat4::from(&quat);
                         info!("-- {:?}, {:?}, {:?}", translation, rot_mat, scale);
-                        let transform = Transform::translate(translation) * Transform::from_matrix(rot_mat) * Transform::scale(scale);
+                        let transform = Transform::translate(translation) * Transform::from(&rot_mat) * Transform::scale(scale);
                         primitive.apply_transform(transform);
                         scene.add(primitive);
                     }
@@ -270,22 +270,22 @@ fn furnace_test() -> Scene
 
     scene.add(
         Primitive::new(
-            Shape::Sphere(Sphere::new(Vec3::new(0., 0., 0.), 2.)),
+            Shape::Sphere(Sphere::new(Vec3::zero(), 2.)),
             Option::Some(
-                Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 1.0)))))));
+                Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3 {x: 1.0, y: 1.0, z: 1.0}))))));
 
     if reveal {
         scene.add(
             Primitive::new(
-                Shape::Sphere(Sphere::new(Vec3::new(3., 0., -0.5), 1.)),
+                Shape::Sphere(Sphere::new(Vec3 {x: 3., y: 0., z: -0.5}, 1.)),
                 Option::Some(
-                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.8, 0.0, 0.0)))))));
+                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3 {x:0.8, y:0.0, z:0.0}))))));
 
         scene.add(
             Primitive::new(
-                Shape::Sphere(Sphere::new(Vec3::new(0., 3., -0.5), 1.)),
+                Shape::Sphere(Sphere::new(Vec3 {x: 0., y: 3., z: -0.5}, 1.)),
                 Option::Some(
-                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.8, 0.1, 0.02)))))));
+                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3{x:0.8, y:0.1, z:0.02}))))));
     }
 
     return scene;
@@ -348,7 +348,7 @@ fn test_samplers(width: u32, height: u32) -> Vec<Spectrum> {
     let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.0)); num_pixels];
 
     let num_samples = 1000;
-    let color = Spectrum::ColorRGB(Vec3::new(1.0, 1.0, 1.0));
+    let color = Spectrum::ColorRGB(Vec3::from(1.0));
     let mut sampler = sampler::Sampler::new();
     for _i in 0..num_samples {
         // Return a point ranges from -1 to 1
@@ -356,11 +356,11 @@ fn test_samplers(width: u32, height: u32) -> Vec<Spectrum> {
         // Uncomment to sample from unit disk
         // let random = sampler.random_vec2_0_1();
         // let mut point = sampler::Sampler::sample_unit_disk_concentric(random);
-        let mut point = sampler.sample_from_pixel( Vec2::new( 10., 10.), width, height);
-        point.x = point.x * width as f64 / 4.0 + width as f64 / 2.0;
-        point.y = point.y * height as f64 / 4.0 + height as f64 / 2.0;
+        let mut point = sampler.sample_from_pixel( Vec2 {0: 10., 1: 10.}, width, height);
+        point.0 = point.x() * width as Float / 4.0 + width as Float / 2.0;
+        point.1 = point.y() * height as Float / 4.0 + height as Float / 2.0;
 
-        let linear_coords: usize = (point.y as u32 * width + point.x as u32) as usize;
+        let linear_coords: usize = (point.1 as u32 * width + point.0 as u32) as usize;
         pixels[linear_coords] = color;
     }
 

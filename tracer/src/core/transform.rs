@@ -1,6 +1,7 @@
 use std::ops;
 
-use math::{Float, Vec3, Mat4, Quaternion};
+use funty::Numeric;
+use math::{Float, Mat4, Matrix4, Quaternion, Vec3};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Transform {
@@ -8,12 +9,50 @@ pub struct Transform {
     pub matrix_inv: Mat4,
 }
 
-impl std::default::Default for Transform {
+impl Default for Transform {
     fn default() -> Self {
         Self {
             matrix: Mat4::identity(),
             matrix_inv: Mat4::identity(),
         }
+    }
+}
+
+impl From<&Quaternion<Float>> for Transform {
+    fn from(quat: &Quaternion<Float>) -> Self {
+        Self {
+            matrix: Mat4::from(quat),
+            // TODO: Apply inverse
+            matrix_inv: Mat4::from(quat),
+        }
+    }
+}
+
+impl From<&Mat4> for Transform {
+    fn from(mat: &Mat4) -> Self {
+        Self {
+            matrix: mat.clone(),
+            // TODO: Apply inverse
+            matrix_inv: mat.clone(),
+        }
+    }
+}
+
+impl From<&gltf::scene::Transform> for Transform {
+    fn from(gltf_xform: &gltf::scene::Transform) -> Self {
+        let mut matrix = Transform::default();
+        match gltf_xform {
+            gltf::scene::Transform::Matrix { matrix } => {},
+            gltf::scene::Transform::Decomposed { translation, rotation, scale } => {
+                let translation = Vec3::from(translation);
+                let scale = Vec3::from(scale);
+
+                matrix = Transform::translate(translation) * Transform::from(&Quaternion::from(rotation)) * Transform::scale(scale);
+            },
+        }
+
+        // TODO: Apply inverse
+        return matrix;
     }
 }
 
@@ -31,37 +70,7 @@ impl Transform {
         return out_transform;
     }
 
-    pub fn from_gltf(gltf_xform: &gltf::scene::Transform) -> Self {
-        let mut matrix = Transform::default();
-        match gltf_xform {
-            gltf::scene::Transform::Matrix { matrix } => {},
-            gltf::scene::Transform::Decomposed { translation, rotation, scale } => {
-                let translation = Vec3::new(translation);
-                let scale = Vec3::new(scale);
-
-                matrix = Transform::translate(translation) * Transform::from_quat(Quaternion::new(rotation)) * Transform::scale(scale);
-            },
-        }
-
-        // TODO: Apply inverse
-        return matrix;
-    }
-
-    pub fn from_quat(quat: Quaternion<Float>) -> Self {
-        Self {
-            matrix: Mat4::from_quat(quat),
-            // TODO: Apply inverse
-            matrix_inv: Mat4::from_quat(quat),
-        }
-    }
-
-    pub fn from_matrix(mat: Mat4) -> Self {
-        Self {
-            matrix: mat,
-            // TODO: Apply inverse
-            matrix_inv: mat,
-        }
-    }
+ 
 
     pub fn from_array(array: [[Float; 4]; 4]) -> Self {
         Self {
@@ -72,11 +81,19 @@ impl Transform {
     }
 
     pub fn get_position(&self) -> Vec3 {
-        Vec3::new(self.matrix[[0,3]], self.matrix[[1,3]], self.matrix[[2,3]])
+        Vec3 {
+            x: self.matrix[[0,3]], 
+            y: self.matrix[[1,3]], 
+            z: self.matrix[[2,3]]
+        }
     }
 
     pub fn get_scale(&self) -> Vec3 {
-        Vec3::new(self.matrix[[0,0]], self.matrix[[1,1]], self.matrix[[2,2]])
+        Vec3 {
+            x: self.matrix[[0,0]], 
+            y: self.matrix[[1,1]], 
+            z: self.matrix[[2,2]]
+        }
     }
 
     pub fn translate(position: Vec3) -> Self {

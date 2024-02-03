@@ -2,7 +2,7 @@ use std::f64::consts::PI;
 
 use rayon::prelude::*;
 
-use math::{Vec2, Vec3};
+use math::{Float, Vec2, Vec3};
 
 use crate::core::{
     interaction::SurfaceInteraction,
@@ -30,7 +30,7 @@ impl Default for DirectLightingIntegrator {
 impl DirectLightingIntegrator {
     fn brdf_lambert(&self, spectrum: Spectrum) -> Spectrum
     {
-        return spectrum / PI;
+        return spectrum / funty::Floating::PI;
     }
 
     fn li(&self, scene: &Scene, ray: &Ray, sampler: &mut Sampler) -> Spectrum {
@@ -51,7 +51,7 @@ impl DirectLightingIntegrator {
                 break;
             }
 
-            let mut material_color = Spectrum::ColorRGB(Vec3::new(1.0,1.0,1.0));
+            let mut material_color = Spectrum::ColorRGB(Vec3::from(1.0));
 
             match isect.hit_primitive {
                 Some(primitive) => {
@@ -70,7 +70,7 @@ impl DirectLightingIntegrator {
             scatter_ray.direction = scatter_ray.direction.normalize();
             scatter_ray.origin = isect.hit_point + scatter_ray.direction * 1e-3;
 
-            let n_dot_l = f64::clamp(Vec3::dot(isect.hit_normal, scatter_ray.direction), 0., 1.);
+            let n_dot_l = Float::clamp(Vec3::dot(isect.hit_normal, scatter_ray.direction), 0., 1.);
 
             //acc_color = acc_color * self.brdf_lambert(material_color) * n_dot_l * 2.0 * PI;
             if depth == 0 {
@@ -96,14 +96,14 @@ impl DirectLightingIntegrator {
                 for x in 0..view.width {
                     let Spectrum::ColorRGB(mut total_spectrum) = Spectrum::ColorRGB(Vec3::from(0.));
                     for _ in 0..samples_per_pixel {
-                        let uv: Vec2 = sampler.sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
+                        let uv: Vec2 = sampler.sample_from_pixel(Vec2 {0: x as Float, 1: y as Float}, view.width, view.height);
                         let mut ray = scene.persp_camera.get_ray(&uv, &mut sampler);
                         let li = self.li(&scene, &mut ray, &mut sampler);
                         match li {
                             Spectrum::ColorRGB(li) => total_spectrum = li + total_spectrum
                         }
                     }
-                    total_spectrum /= samples_per_pixel as f64;
+                    total_spectrum /= samples_per_pixel as Float;
                     // Gamma correction
                     total_spectrum = Vec3::sqrt(total_spectrum);
                     let i: usize = (y * view.width + x) as usize;
@@ -118,14 +118,14 @@ impl DirectLightingIntegrator {
                 let mut total_spectrum = (0..samples_per_pixel).into_par_iter().
                 map(|_sample| {
                     let mut sampler = Sampler::new();
-                    let uv: Vec2 = sampler.sample_from_pixel(Vec2 {x: x as f64, y: y as f64}, view.width, view.height);
+                    let uv: Vec2 = sampler.sample_from_pixel(Vec2 {0: x as Float, 1: y as Float}, view.width, view.height);
 
                     let ray = scene.persp_camera.get_ray(&uv, &mut sampler);
                     let Spectrum::ColorRGB(color) = self.li(&scene, &ray, &mut sampler);
                     color
                 }).sum::<Vec3>();
 
-                total_spectrum /= samples_per_pixel as f64;
+                total_spectrum /= samples_per_pixel as Float;
                 // Gamma correction
                 total_spectrum = Vec3::sqrt(total_spectrum);
                 *pixel = Spectrum::ColorRGB(total_spectrum);

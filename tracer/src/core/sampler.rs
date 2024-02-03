@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use math::{Vec2, Vec3};
+use math::{Float, Vec2, Vec3};
 
 pub struct Sampler {
     pub rng_generator: ThreadRng
@@ -12,62 +12,62 @@ impl Sampler {
         }
     }
 
-    pub fn random_0_1(&mut self) -> f64 {
-        self.rng_generator.sample(rand::distributions::Uniform::new(0f64, 1f64))
+    pub fn random_0_1(&mut self) -> Float {
+        self.rng_generator.sample(rand::distributions::Uniform::new(0., 1.))
     }
 
     pub fn random_vec2_0_1(&mut self) -> Vec2 {
-        let ru = self.rng_generator.gen_range(0f64..1f64);
-        let rv = self.rng_generator.gen_range(0f64..1f64);
-        return Vec2::new(ru, rv);
+        let ru = self.rng_generator.gen_range(0.0..1.0);
+        let rv = self.rng_generator.gen_range(0.0..1.0);
+        return Vec2 { 0: ru, 1: rv};
     }
 
     pub fn sample_from_pixel(&mut self, point: Vec2, width: u32, height: u32) -> Vec2 {
-        let ru: f64 = self.random_0_1();
-        let rv: f64 = self.random_0_1();
-        let u = (point.x + ru) / width as f64;
-        let v = (point.y + rv) / height as f64;
-        Vec2 { x: u, y: v}
+        let ru = self.random_0_1();
+        let rv = self.random_0_1();
+        let u = (point.0 + ru) / width as Float;
+        let v = (point.1 + rv) / height as Float;
+        Vec2 { 0: u, 1: v}
     }
 
     pub fn sample_unit_disk(&mut self) -> Vec2 {
-        let mut point: Vec2 = 2. * Vec2::new(self.random_0_1(), self.random_0_1()) - Vec2::from(1.);
+        let mut point: Vec2 = 2. * Vec2 { 0: self.random_0_1(), 1: self.random_0_1()} - Vec2::from(1.);
         loop {
             // dot product with itself is squared length
             if Vec2::dot(point, point) < 1. {
                 break;
             }
-            point = 2. * Vec2::new(self.random_0_1(), self.random_0_1()) - Vec2::from(1.);
+            point = 2. * Vec2 { 0: self.random_0_1(), 1: self.random_0_1()} - Vec2::from(1.);
         }
         point
     }
 
     pub fn sample_unit_disk_concentric(u: Vec2) -> Vec2 {
         let u_offset = 2. * u - Vec2::from(1.0);
-        if u_offset.x == 0.0 && u_offset.y == 0.0 {
+        if u_offset.0 == 0.0 && u_offset.1 == 0.0 {
             return Vec2::from(0.);
         }
 
-        let mut theta = 0.;
-        let mut r = 0.;
-        if u_offset.x.abs() > u_offset.y.abs() {
-            r = u_offset.x;
-            theta = std::f64::consts::FRAC_PI_4 * (u_offset.y / u_offset.x);
+        let mut theta = 0. as Float;
+        let mut r = 0. as Float;
+        if u_offset.0.abs() > u_offset.1.abs() {
+            r = u_offset.0;
+            theta = std::f32::consts::FRAC_PI_4 * (u_offset.1 / u_offset.0);
         } else {
-            r = u_offset.y;
-            theta = std::f64::consts::FRAC_PI_2 - std::f64::consts::FRAC_PI_4 * (u_offset.x / u_offset.y);
+            r = u_offset.1;
+            theta = std::f32::consts::FRAC_PI_2 - std::f32::consts::FRAC_PI_4 * (u_offset.0 / u_offset.1);
         }
-        return r * Vec2::new(theta.cos(), theta.sin());
+        return r * Vec2 { 0: theta.cos(), 1: theta.sin()};
     }
 
     pub fn sample_from_unit_sphere(&mut self) -> Vec3 {
-        let mut point = Vec3::new(self.random_0_1(), self.random_0_1(), self.random_0_1());
+        let mut point = Vec3 { x: self.random_0_1(), y: self.random_0_1(), z: self.random_0_1() };
         loop
 		{
             if Vec3::length2(&point) < 1. {
                 break;
             }
-			point = 2. * Vec3::new(self.random_0_1(), self.random_0_1(), self.random_0_1()) - Vec3::from(1.); // Scale to -1 , 1 range
+			point = 2. * Vec3 {x: self.random_0_1(), y: self.random_0_1(), z: self.random_0_1() } - Vec3::from(1.); // Scale to -1 , 1 range
 		}
 
 		point
@@ -95,7 +95,7 @@ impl Sampler {
 		// Malley's method: sample from concentric disk, then project upward
         let random = self.random_vec2_0_1();
 		let r = Sampler::sample_unit_disk_concentric(random);
-		let z: f64 = 0.0_f64.max(1.0 - r.x * r.x - r.y * r.y);
-		return Vec3::new(r.x, r.y, z);
+		let z = Float::max(0.0, 1.0 - r.x() * r.x() - r.y() * r.y());
+		return Vec3 { x: r.x(), y: r.y(), z: z};
     }
 }

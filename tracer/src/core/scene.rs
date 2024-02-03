@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use math::Vec3;
+use math::{Float, Vec3};
 
 use crate::cameras::perspective::PerspectiveCamera;
 use crate::core::primitive::Primitive;
@@ -34,14 +34,15 @@ impl Scene {
     }
 
     fn parse_gltf_node(self, node: &gltf::Node, parent_xform: Transform) {
-        let xform = parent_xform * node.transform();
+        let xform = parent_xform * Transform::from(&node.transform());
         if let Some(mesh) = node.mesh() {
 
         }
 
-        for child_node in node.children() {
-            self.parse_gltf_node(child_node, )
-        }
+        // TODO
+        // for child_node in node.children() {
+        //     self.parse_gltf_node(child_node, )
+        // }
     }
 }
 
@@ -65,7 +66,7 @@ impl Scene {
     }
 
     pub fn intersect(&self, ray: &Ray, closest_isect: &mut SurfaceInteraction) -> bool {
-        const MAX_T: f64 = 99999.;
+        const MAX_T: Float = funty::Floating::MAX;
         let mut closest_t = MAX_T;
         for primitive in self.primitives.iter() {
             let mut isect = SurfaceInteraction::new();
@@ -78,7 +79,7 @@ impl Scene {
                 closest_isect.hit_primitive = Some(primitive.clone());
             }
         }
-        if closest_t < MAX_T && closest_t > 1e-5 {
+        if closest_t < MAX_T && closest_t > funty::Floating::EPSILON {
             return true;
         } else {
             return false;
