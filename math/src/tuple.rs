@@ -1,47 +1,38 @@
+use crate::Float;
+
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Tuple<T, const N: usize> {
-    v: [T; N]
+    v: [T; N],
 }
 
-pub type Tuple2d = Tuple<f64, 2>;
-pub type Tuple3d = Tuple<f64, 3>;
-pub type Tuple4d = Tuple<f64, 4>;
+pub type Tuple2d = Tuple<Float, 2>;
+pub type Tuple3d = Tuple<Float, 3>;
+pub type Tuple4d = Tuple<Float, 4>;
 
-impl<const N: usize> Tuple<f64, N> {
+impl<const N: usize> Tuple<Float, N> {
     pub fn zero() -> Self {
-        Self {
-            v: [0.0; N]
-        }
+        Self { v: [0.0; N] }
     }
 
-    pub fn from(val: f64) -> Self {
-        Self {
-            v: [val; N]
-        }
+    pub fn from(val: Float) -> Self {
+        Self { v: [val; N] }
     }
 }
 
 impl Tuple2d {
-    pub fn new(x: f64, y: f64) -> Self {
-        Self {
-            v: [x, y]
-        }
+    pub fn new(x: Float, y: Float) -> Self {
+        Self { v: [x, y] }
     }
 }
 
 impl Tuple3d {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
-        Self {
-            v: [x, y, z]
-        }
+    pub fn new(x: Float, y: Float, z: Float) -> Self {
+        Self { v: [x, y, z] }
     }
 }
 
 impl Tuple4d {
-    pub fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
-        Self {
-            v: [x, y, z, w]
-        }
+    pub fn new(x: Float, y: Float, z: Float, w: Float) -> Self {
+        Self { v: [x, y, z, w] }
     }
 }
-

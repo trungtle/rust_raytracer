@@ -1,56 +1,63 @@
-use std::{default, ops};
+use std::ops::{self, Neg};
 use std::ops::{Index, IndexMut};
-use crate::types::Float;
+
+use crate::Float;
+
+use super::{Floating, Numeric};
 use super::tuple::{Tuple2d, Tuple3d, Tuple4d};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Vector {
-    Vector2d(Tuple2d),
-    Vector3d(Tuple3d),
-    Vector4d(Tuple4d)
+    V2(Tuple2d),
+    V3(Tuple3d),
+    V4(Tuple4d)
 }
-
-// pub fn sqrt(v: Vector) -> Vector {
-
-// }
 
 #[derive(PartialEq, Copy, Clone, Debug)]
-pub struct Vec3 {
-    pub x: Float,
-    pub y: Float,
-    pub z: Float
+pub struct Vector3<T>
+    where T: Numeric {
+    pub x: T,
+    pub y: T,
+    pub z: T
 }
 
-impl Default for Vec3 {
+impl<T> Default for Vector3<T>
+    where T: Numeric {
     fn default() -> Self {
-        Vec3::zero()
+        Vector3::zero()
     }
 }
 
-impl Vec3 {
-    pub fn new(x: Float, y: Float, z: Float) -> Self {
+impl<T> Vector3<T>
+    where T: Numeric {
+    pub fn zero() -> Self {
+        Self { x: T::default(), y: T::default(), z: T::default() }
+    }
+
+    pub fn x(&self) -> T { self.x }
+    pub fn y(&self) -> T { self.y }
+    pub fn z(&self) -> T { self.z }
+    pub fn r(&self) -> T { self.x }
+    pub fn g(&self) -> T { self.y }
+    pub fn b(&self) -> T { self.z }
+}
+
+impl<T> Vector3<T>
+    where T: Floating {
+    pub fn new(v: &[T; 3]) -> Self {
         Self {
-            x, y, z
+            x: v[0], y: v[1], z: v[2]
         }
     }
+}
 
-    pub fn zero() -> Self {
-        Self { x: 0., y: 0., z: 0. }
-    }
-
-    pub fn x(&self) -> Float { self.x }
-    pub fn y(&self) -> Float { self.y }
-    pub fn z(&self) -> Float { self.z }
-    pub fn r(&self) -> Float { self.x }
-    pub fn g(&self) -> Float { self.y }
-    pub fn b(&self) -> Float { self.z }
-
-    pub fn sqrt(v: Vec3) -> Vec3 {
-        Vec3::new(
-            Float::sqrt(v.x),
-            Float::sqrt(v.y),
-            Float::sqrt(v.z)
-        )
+impl Vector3<Float> {
+    pub fn sqrt(v: Vector3<Float>) -> Vector3<Float> {
+        Vector3 {
+            x: Float::sqrt(v.x),
+            y: Float::sqrt(v.y),
+            z: Float::sqrt(v.z)
+        }
     }
 
     pub fn length(&self) -> Float {
@@ -61,29 +68,29 @@ impl Vec3 {
         self.x*self.x + self.y*self.y + self.z*self.z
     }
 
-    pub fn normalize(&self) -> Vec3 {
+    pub fn normalize(&self) -> Vector3<Float> {
         let len_inv = 1.0 / self.length();
-        Vec3 {
+        Vector3 {
             x: self.x * len_inv,
             y: self.y * len_inv,
             z: self.z * len_inv
         }
     }
 
-    pub fn clamp(&self, min: Float, max: Float) -> Vec3 {
-        Vec3 {
+    pub fn dot(v1: Vector3<Float>, v2: Vector3<Float>) -> Float {
+        v1.x() * v2.x() + v1.y() * v2.y() + v1.z() * v2.z()
+    }
+
+    pub fn clamp(&self, min: Float, max: Float) -> Vector3<Float> {
+        Vector3 {
             x: self.x.clamp(min, max),
             y: self.y.clamp(min, max),
             z: self.z.clamp(min, max)
         }
     }
 
-    pub fn dot(v1: Vec3, v2: Vec3) -> Float {
-        v1.x() * v2.x() + v1.y() * v2.y() + v1.z() * v2.z()
-    }
-
-    pub fn cross(v1: Vec3, v2: Vec3) -> Vec3 {
-        Vec3 {
+    pub fn cross(v1: Vector3<Float>, v2: Vector3<Float>) -> Vector3<Float> {
+        Vector3 {
             x: v1.y() * v2.z() - v1.z() * v2.y(),
             y: -(v1.x() * v2.z() - v1.z() * v2.x()),
             z: v1.x() * v2.y() - v1.y() * v2.x()
@@ -91,21 +98,22 @@ impl Vec3 {
     }
 
     pub fn near_zero(&self) -> bool {
-        let eps = 1e-8;
+        let eps = Float::from(1e-8);
         self.x.abs() < eps && self.y.abs() < eps && self.z.abs() < eps
     }
 
-    pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
-        return v - 2. * Vec3::dot(v, n) * n;
+    pub fn reflect(v: Vector3<Float>, n: Vector3<Float>) -> Vector3<Float> {
+        return v - n * Float::from(2.) * Vector3::dot(v, n);
     }
 }
 
 // ----------------------------------------------------------------------------
 // Conversion from other types
 // ----------------------------------------------------------------------------
-impl From<Float> for Vec3 {
-    fn from(item: Float) -> Self {
-        Vec3 {
+impl<T> From<T> for Vector3<T>
+    where T: Numeric{
+    fn from(item: T) -> Self {
+        Vector3 {
             x: item, y: item, z: item
         }
     }
@@ -114,9 +122,10 @@ impl From<Float> for Vec3 {
 // ----------------------------------------------------------------------------
 // Operator overloading
 // ----------------------------------------------------------------------------
-impl Index<usize> for Vec3 {
-    type Output = Float;
-    fn index<'a>(&'a self, i: usize) -> &Float {
+impl<T> Index<usize> for Vector3<T>
+    where T: Numeric {
+    type Output = T;
+    fn index<'a>(&'a self, i: usize) -> &T {
         if i == 0 {
             return &self.x;
         } else if i == 1{
@@ -127,7 +136,8 @@ impl Index<usize> for Vec3 {
     }
 }
 
-impl IndexMut<usize> for Vec3 {
+impl<T> IndexMut<usize> for Vector3<T>
+    where T: Numeric {
     fn index_mut<'a>(&mut self, i: usize) -> &mut Self::Output {
         if i == 0 {
             return &mut self.x;
@@ -139,23 +149,24 @@ impl IndexMut<usize> for Vec3 {
     }
 }
 
-impl ops::Neg for Vec3 {
+impl ops::Neg for Vector3<Float> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self {
-            x: -self.x,
+            x: self.x().neg(),
             y: -self.y,
             z: -self.z
         }
     }
 }
 
-impl ops::Add<Vec3> for Vec3 {
-    type Output = Vec3;
+impl<T> ops::Add<Vector3<T>> for Vector3<T>
+    where T: Numeric {
+    type Output = Vector3<T>;
 
-    fn add(self, _rhs: Vec3) -> Self::Output {
-        Vec3 {
+    fn add(self, _rhs: Vector3<T>) -> Self::Output {
+        Vector3 {
             x: self.x + _rhs.x,
             y: self.y + _rhs.y,
             z: self.z + _rhs.z,
@@ -163,7 +174,8 @@ impl ops::Add<Vec3> for Vec3 {
     }
 }
 
-impl ops::AddAssign<Vec3> for Vec3 {
+impl<T> ops::AddAssign<Vector3<T>> for Vector3<T>
+    where T: Numeric {
     fn add_assign(&mut self, other: Self) {
         *self = Self {
             x: self.x + other.x,
@@ -173,8 +185,9 @@ impl ops::AddAssign<Vec3> for Vec3 {
     }
 }
 
-impl ops::AddAssign<Float> for Vec3 {
-    fn add_assign(&mut self, other: Float) {
+impl<T> ops::AddAssign<T> for Vector3<T>
+    where T: Numeric {
+    fn add_assign(&mut self, other: T) {
         *self = Self {
             x: self.x + other,
             y: self.y + other,
@@ -183,11 +196,12 @@ impl ops::AddAssign<Float> for Vec3 {
     }
 }
 
-impl ops::Sub<Vec3> for Vec3 {
-    type Output = Vec3;
+impl<T> ops::Sub<Vector3<T>> for Vector3<T>
+    where T: Numeric {
+    type Output = Vector3<T>;
 
-    fn sub(self, _rhs: Vec3) -> Self::Output {
-        Vec3 {
+    fn sub(self, _rhs: Vector3<T>) -> Self::Output {
+        Vector3 {
             x: self.x - _rhs.x,
             y: self.y - _rhs.y,
             z: self.z - _rhs.z,
@@ -195,8 +209,9 @@ impl ops::Sub<Vec3> for Vec3 {
     }
 }
 
-impl ops::SubAssign<Float> for Vec3 {
-    fn sub_assign(&mut self, other: Float) {
+impl<T> ops::SubAssign<T> for Vector3<T>
+    where T: Numeric {
+    fn sub_assign(&mut self, other: T) {
         *self = Self {
             x: self.x - other,
             y: self.y - other,
@@ -205,8 +220,9 @@ impl ops::SubAssign<Float> for Vec3 {
     }
 }
 
-impl ops::SubAssign<Vec3> for Vec3 {
-    fn sub_assign(&mut self, other: Vec3) {
+impl<T> ops::SubAssign<Vector3<T>> for Vector3<T>
+    where T: Numeric {
+    fn sub_assign(&mut self, other: Vector3<T>) {
         *self = Self {
             x: self.x - other.x,
             y: self.y - other.y,
@@ -215,11 +231,12 @@ impl ops::SubAssign<Vec3> for Vec3 {
     }
 }
 
-impl ops::Mul<Float> for Vec3 {
-    type Output = Vec3;
+impl<T> ops::Mul<T> for Vector3<T>
+    where T: Numeric {
+    type Output = Vector3<T>;
 
-    fn mul(self, _rhs: Float) -> Self::Output {
-        Vec3 {
+    fn mul(self, _rhs: T) -> Self::Output {
+        Vector3 {
             x: self.x * _rhs,
             y: self.y * _rhs,
             z: self.z * _rhs,
@@ -227,23 +244,12 @@ impl ops::Mul<Float> for Vec3 {
     }
 }
 
-impl ops::Mul<Vec3> for Float {
-    type Output = Vec3;
+impl<T> ops::Mul<Vector3<T>> for Vector3<T>
+    where T: Numeric {
+    type Output = Vector3<T>;
 
-    fn mul(self, _rhs: Vec3) -> Self::Output {
-        Vec3 {
-            x: self * _rhs.x,
-            y: self * _rhs.y,
-            z: self * _rhs.z,
-        }
-    }
-}
-
-impl ops::Mul<Vec3> for Vec3 {
-    type Output = Vec3;
-
-    fn mul(self, _rhs: Vec3) -> Self::Output {
-        Vec3 {
+    fn mul(self, _rhs: Vector3<T>) -> Self::Output {
+        Vector3 {
             x: self.x * _rhs.x,
             y: self.y * _rhs.y,
             z: self.z * _rhs.z,
@@ -251,8 +257,9 @@ impl ops::Mul<Vec3> for Vec3 {
     }
 }
 
-impl ops::MulAssign<Float> for Vec3 {
-    fn mul_assign(&mut self, other: Float) {
+impl<T> ops::MulAssign<T> for Vector3<T>
+    where T: Numeric {
+    fn mul_assign(&mut self, other: T) {
         *self = Self {
             x: self.x * other,
             y: self.y * other,
@@ -261,11 +268,12 @@ impl ops::MulAssign<Float> for Vec3 {
     }
 }
 
-impl ops::Div<Float> for Vec3 {
-    type Output = Vec3;
+impl<T> ops::Div<T> for Vector3<T>
+    where T: Numeric {
+    type Output = Vector3<T>;
 
-    fn div(self, _rhs: Float) -> Self::Output  {
-        Vec3 {
+    fn div(self, _rhs: T) -> Self::Output  {
+        Vector3 {
             x: self.x / _rhs,
             y: self.y / _rhs,
             z: self.z / _rhs,
@@ -273,8 +281,9 @@ impl ops::Div<Float> for Vec3 {
     }
 }
 
-impl ops::DivAssign<Float> for Vec3 {
-    fn div_assign(&mut self, other: Float) {
+impl<T> ops::DivAssign<T> for Vector3<T>
+    where T: Numeric {
+    fn div_assign(&mut self, other: T) {
         *self = Self {
             x: self.x / other,
             y: self.y / other,
@@ -283,12 +292,13 @@ impl ops::DivAssign<Float> for Vec3 {
     }
 }
 
-impl std::iter::Sum for Vec3 {
+impl<T> std::iter::Sum for Vector3<T>
+    where T: Numeric {
     fn sum<I>(iter: I) -> Self
         where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Self { x: 0.0, y: 0.0, z: 0.0 }, |a, b| Self {
+        iter.fold(Self { x: T::default(), y: T::default(), z: T::default() }, |a, b| Self {
             x: a.x + b.x,
             y: a.y + b.y,
             z: a.z + b.z
@@ -297,41 +307,40 @@ impl std::iter::Sum for Vec3 {
 }
 
 // ----------------------------------------------------------------------------
-// VEC2
+// Vector2
 // ----------------------------------------------------------------------------
 #[derive(PartialEq, Copy, Clone, Debug)]
-pub struct Vec2 {
-    pub x: Float,
-    pub y: Float
+pub struct Vector2<T>(pub T, pub T) where T: Numeric;
+
+impl<T> Vector2<T>
+    where T: Floating {
+    pub fn length(&self) -> T {
+        T::sqrt(self.x()*self.x() + self.y()*self.y())
+    }
+
+    pub fn normalize(&self) -> Vector2<T> {
+        let len = self.length();
+        Vector2 {
+            0: self.x() / len,
+            1: self.y() / len
+        }
+    }
 }
 
-impl Vec2 {
-    pub fn new(x: Float, y: Float) -> Self {
-        Self {
-            x, y
-        }
+impl<T> Vector2<T>
+    where T: Numeric {
+    pub fn new(v: &[T; 2]) -> Self {
+        Vector2 { 0: v[0], 1: v[1] }
     }
 
-    pub fn x(&self) -> Float { self.x }
-    pub fn y(&self) -> Float { self.y }
+    pub fn x(&self) -> T { self.0 }
+    pub fn y(&self) -> T { self.1 }
 
-    pub fn length(&self) -> Float {
-        Float::sqrt(self.x*self.x + self.y*self.y)
+    pub fn length2(&self) -> T {
+        self.x()*self.x() + self.y()*self.y()
     }
 
-    pub fn length2(&self) -> Float {
-        self.x*self.x + self.y*self.y
-    }
-
-    pub fn normalize(&self) -> Vec2 {
-        let len_inv = 1.0 / self.length();
-        Vec2 {
-            x: self.x * len_inv,
-            y: self.y * len_inv
-        }
-    }
-
-    pub fn dot(v1: Vec2, v2: Vec2) -> Float {
+    pub fn dot(v1: Vector2<T>, v2: Vector2<T>) -> T {
         v1.x() * v2.x() + v1.y() * v2.y()
     }
 }
@@ -339,123 +348,91 @@ impl Vec2 {
 // ----------------------------------------------------------------------------
 // Conversion from other types
 // ----------------------------------------------------------------------------
-impl From<Float> for Vec2 {
-    fn from(item: Float) -> Self {
-        Vec2 {
-            x: item, y: item
-        }
+impl<T> From<T> for Vector2<T>
+    where T: Numeric {
+    fn from(item: T) -> Self {
+        Vector2 { 0: item, 1: item }
     }
 }
 
 // ----------------------------------------------------------------------------
 // Operator overloading
 // ----------------------------------------------------------------------------
-impl ops::Neg for Vec2 {
+impl ops::Neg for Vector2<Float> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self {
-            x: -self.x,
-            y: -self.y
-        }
+        Vector2 { 0: -self.x(), 1: -self.y() }
     }
 }
 
-impl ops::Add<Vec2> for Vec2 {
-    type Output = Vec2;
+impl<T> ops::Add<Vector2<T>> for Vector2<T>
+    where T: Numeric {
+    type Output = Vector2<T>;
 
-    fn add(self, _rhs: Vec2) -> Self::Output {
-        Vec2 {
-            x: self.x + _rhs.x,
-            y: self.y + _rhs.y
-        }
-    }
+    fn add(self, _rhs: Vector2<T>) -> Self::Output {
+        Vector2 { 0: self.x() + _rhs.x(), 1: self.y() + _rhs.y()}
+   }
 }
 
-impl ops::AddAssign<Vec2> for Vec2 {
+impl<T> ops::AddAssign<Vector2<T>> for Vector2<T>
+    where T: Numeric {
     fn add_assign(&mut self, other: Self) {
-        *self = Self {
-            x: self.x + other.x,
-            y: self.y + other.y
-        };
+        *self = Vector2 { 0: self.x() + other.x(), 1: self.y() + other.y()};
     }
 }
 
-impl ops::AddAssign<Float> for Vec2 {
-    fn add_assign(&mut self, other: Float) {
-        *self = Self {
-            x: self.x + other,
-            y: self.y + other
-        };
+impl<T> ops::AddAssign<T> for Vector2<T>
+    where T: Numeric {
+    fn add_assign(&mut self, other: T) {
+        *self = Vector2 { 0: self.x() + other, 1: self.y() + other};
     }
 }
 
-impl ops::Sub<Vec2> for Vec2 {
-    type Output = Vec2;
+impl<T> ops::Sub<Vector2<T>> for Vector2<T>
+    where T: Numeric {
+    type Output = Vector2<T>;
 
-    fn sub(self, _rhs: Vec2) -> Self::Output {
-        Vec2 {
-            x: self.x - _rhs.x,
-            y: self.y - _rhs.y
-        }
+    fn sub(self, _rhs: Vector2<T>) -> Self::Output {
+        Vector2 { 0: self.x() - _rhs.x(), 1: self.y() - _rhs.y()}
     }
 }
 
-impl ops::SubAssign<Float> for Vec2 {
-    fn sub_assign(&mut self, other: Float) {
-        *self = Self {
-            x: self.x - other,
-            y: self.y - other
-        };
+impl<T> ops::SubAssign<T> for Vector2<T>
+    where T: Numeric {
+    fn sub_assign(&mut self, other: T) {
+        *self = Vector2 { 0: self.x() - other, 1: self.y() - other};
     }
 }
 
-impl ops::SubAssign<Vec2> for Vec2 {
-    fn sub_assign(&mut self, other: Vec2) {
-        *self = Self {
-            x: self.x - other.x,
-            y: self.y - other.y
-        };
+impl<T> ops::SubAssign<Vector2<T>> for Vector2<T>
+    where T: Numeric {
+    fn sub_assign(&mut self, other: Vector2<T>) {
+        *self = Vector2{ 0: self.x() - other.x(), 1: self.y() - other.y() };
     }
 }
 
-impl ops::Mul<Float> for Vec2 {
-    type Output = Vec2;
+impl<T> ops::Mul<T> for Vector2<T>
+    where T: Numeric {
+    type Output = Vector2<T>;
 
-    fn mul(self, _rhs: Float) -> Self::Output {
-        Vec2 {
-            x: self.x * _rhs,
-            y: self.y * _rhs
-        }
+    fn mul(self, _rhs: T) -> Self::Output {
+        Vector2 { 0: self.x() * _rhs, 1: self.y() * _rhs }
     }
 }
 
-impl ops::Mul<Vec2> for Float {
-    type Output = Vec2;
-
-    fn mul(self, _rhs: Vec2) -> Self::Output {
-        Vec2 {
-            x: self * _rhs.x,
-            y: self * _rhs.y
-        }
-    }
-}
-
-impl ops::MulAssign<Float> for Vec2 {
-    fn mul_assign(&mut self, other: Float) {
-        *self = Self {
-            x: self.x * other,
-            y: self.y * other
-        };
+impl<T> ops::MulAssign<T> for Vector2<T>
+    where T: Numeric {
+    fn mul_assign(&mut self, other: T) {
+        *self = Vector2 { 0: self.x() * other, 1: self.y() * other };
     }
 }
 
 
-impl ops::DivAssign<Float> for Vec2 {
-    fn div_assign(&mut self, other: Float) {
-        *self = Self {
-            x: self.x / other,
-            y: self.y / other
-        };
+impl<T> ops::DivAssign<T> for Vector2<T>
+    where T: Numeric {
+    fn div_assign(&mut self, other: T) {
+        *self = Vector2 { 0: self.x() / other, 1: self.y() / other };
     }
 }
+

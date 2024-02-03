@@ -1,6 +1,6 @@
 use std::ops;
 
-use math::{Float, Vec3, Mat4};
+use math::{Float, Vec3, Mat4, Quaternion};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Transform {
@@ -26,12 +26,39 @@ impl Transform {
             Transform::rotate_x(rotation.y) *
             Transform::rotate_x(rotation.z) *
             Transform::scale(scale);
+
+        // TODO: Apply inverse
         return out_transform;
+    }
+
+    pub fn from_gltf(gltf_xform: &gltf::scene::Transform) -> Self {
+        let mut matrix = Transform::default();
+        match gltf_xform {
+            gltf::scene::Transform::Matrix { matrix } => {},
+            gltf::scene::Transform::Decomposed { translation, rotation, scale } => {
+                let translation = Vec3::new(translation);
+                let scale = Vec3::new(scale);
+
+                matrix = Transform::translate(translation) * Transform::from_quat(Quaternion::new(rotation)) * Transform::scale(scale);
+            },
+        }
+
+        // TODO: Apply inverse
+        return matrix;
+    }
+
+    pub fn from_quat(quat: Quaternion<Float>) -> Self {
+        Self {
+            matrix: Mat4::from_quat(quat),
+            // TODO: Apply inverse
+            matrix_inv: Mat4::from_quat(quat),
+        }
     }
 
     pub fn from_matrix(mat: Mat4) -> Self {
         Self {
             matrix: mat,
+            // TODO: Apply inverse
             matrix_inv: mat,
         }
     }
@@ -39,6 +66,7 @@ impl Transform {
     pub fn from_array(array: [[Float; 4]; 4]) -> Self {
         Self {
             matrix: Mat4::from_array(array),
+            // TODO: Apply inverse
             matrix_inv: Mat4::from_array(array),
         }
     }
@@ -60,6 +88,8 @@ impl Transform {
         out_transform.matrix_inv[[0, 3]] = -position[0];
         out_transform.matrix_inv[[1, 3]] = -position[1];
         out_transform.matrix_inv[[2, 3]] = -position[2];
+
+        // TODO: Apply inverse
         return out_transform;
     }
 
@@ -71,6 +101,8 @@ impl Transform {
             [0., costheta, -sintheta, 0.],
             [0., sintheta, costheta, 0.],
             [0., 0., 0., 1.]]);
+
+        // TODO: Apply inverse
         return out_transform;
     }
 
@@ -82,6 +114,8 @@ impl Transform {
             [0., 1., 0., 0.],
             [-sintheta, 0., costheta, 0.],
             [0., 0., 0., 1.]]);
+
+        // TODO: Apply inverse
         return out_transform;
     }
 
@@ -93,6 +127,8 @@ impl Transform {
             [sintheta, costheta, 0., 0.],
             [0., 0., 1., 0.],
             [0., 0., 0., 1.]]);
+
+        // TODO: Apply inverse
         return out_transform;
     }
 
@@ -105,6 +141,8 @@ impl Transform {
         out_transform.matrix_inv[[0, 0]] = 1.0 / scale[0];
         out_transform.matrix_inv[[1, 1]] = 1.0 / scale[1];
         out_transform.matrix_inv[[2, 2]] = 1.0 / scale[2];
+
+        // TODO: Apply inverse
         return out_transform;
     }
 }

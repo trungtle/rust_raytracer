@@ -1,4 +1,6 @@
 use math::Vec3;
+use math::Float;
+
 #[derive(Clone, Copy)]
 pub struct Ray {
     pub origin: Vec3,
@@ -13,7 +15,7 @@ impl Ray {
         }
     }
 
-    pub fn point_at(&self, t: f64) -> Vec3 {
+    pub fn point_at(&self, t: Float) -> Vec3 {
         self.origin + t * self.direction
     }
 }

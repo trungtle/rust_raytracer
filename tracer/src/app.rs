@@ -1,6 +1,6 @@
 use eframe::{egui::{self}, epaint::ColorImage};
 
-use math::{Vec2, Vec3};
+use math::{Vec2, Vec3, Quaternion};
 
 use std::{f64::consts::FRAC_PI_2, path::{Path, PathBuf}};
 use std::{
@@ -139,7 +139,7 @@ fn pbrt4_scene() -> Scene
 
 fn gltf_scene() -> Scene
 {
-    let mut camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
+    let mut camera_position: Vec3 = Vec3::new(0.,25.5,10.);
     let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
 
     let mut scene = Scene::default();
@@ -166,20 +166,21 @@ fn gltf_scene() -> Scene
             gltf::scene::Transform::Matrix { matrix } => {}
             gltf::scene::Transform::Decomposed { translation, rotation, scale } => {
                 let translation = Vec3::new(translation[0] as f64, translation[1] as f64, translation[2] as f64);
-                let rotation = Vec3::new(rotation[0] as f64, rotation[1] as f64, rotation[2] as f64);
                 let scale = Vec3::new(scale[0] as f64, scale[1] as f64, scale[2] as f64);
 
                 if let Some(mesh) = node.mesh() {
                     info!("Node: {:?} - Mesh: {:?} - Transform: {:?}", node.name(), mesh.name(), node.transform());
                     for primitive in mesh.primitives() {
                         let mesh = Mesh::from_gltf(&primitive, &g_data);
-                        let mut primitive = Primitive::new(Shape::Mesh(mesh), 
+                        let mut primitive = Primitive::new(Shape::Mesh(mesh),
                             Option::Some(
                                 Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.5, 0.5))))));
-                        let transform = Transform::new(translation, rotation, scale);
-                        info!("-- {:?}, {:?}, {:?}", translation, rotation, scale);
+                        let quat = Quaternion::<f32>::new(rotation);
+                        let rot_mat = math::Mat4::from_quat(quat);
+                        info!("-- {:?}, {:?}, {:?}", translation, rot_mat, scale);
+                        let transform = Transform::translate(translation) * Transform::from_matrix(rot_mat) * Transform::scale(scale);
                         primitive.apply_transform(transform);
-                        scene.add(primitive);        
+                        scene.add(primitive);
                     }
                 }
                 else if let Some(_) = node.camera() {
@@ -194,7 +195,7 @@ fn gltf_scene() -> Scene
 
 
     for image in g_data.images {
-        
+
     }
 
     return scene;

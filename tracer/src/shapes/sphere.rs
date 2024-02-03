@@ -1,5 +1,5 @@
-use std::f64::consts::PI;
-use math::{Vec2, Vec3};
+use std::f32::consts::PI;
+use math::{Float, Vec2, Vec3};
 
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
@@ -7,12 +7,12 @@ use crate::core::ray::Ray;
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Sphere {
     pub center: Vec3,
-    pub radius: f64,
-    radius_sq: f64,
+    pub radius: Float,
+    radius_sq: Float,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f64) -> Self {
+    pub fn new(center: Vec3, radius: Float) -> Self {
         Self {
             center,
             radius,
@@ -26,11 +26,11 @@ impl Sphere {
 
     // Get UV for a unit sphere
     pub fn uv_at(&self, point: &Vec3) -> Vec2 {
-		let phi = f64::atan2(point.z, point.x);
-		let theta = f64::asin(point.y);
+		let phi = Float::atan2(point.z, point.x);
+		let theta = Float::asin(point.y);
 		let u = 1. - (phi + PI) / (2. * PI);
 		let v = (theta + PI / 2.) / PI;
-		Vec2 {x: u, y: v}
+		Vec2 {0: u, 1: v}
     }
 
     pub fn intersect(&self, ray: &Ray, isect: &mut SurfaceInteraction) -> bool {
@@ -47,12 +47,12 @@ impl Sphere {
 		let b = 2. * Vec3::dot(ray.direction, oc);
 		let c = Vec3::dot(oc, oc) - self.radius_sq;
 
-        const T_MIN: f64 = 1e-3;
-        const T_MAX: f64 = 10000.;
+        const T_MIN: Float = 1e-3;
+        const T_MAX: Float = 10000.;
 
 		let discriminant = b * b - 4. * a * c;
 		if discriminant > 0. {
-			let t = (-b - f64::sqrt(discriminant)) / (2. * a);
+			let t = (-b - Float::sqrt(discriminant)) / (2. * a);
 			if t > T_MIN && t < T_MAX {
 				isect.t = t;
 				isect.hit_point = ray.point_at(t);
@@ -60,7 +60,7 @@ impl Sphere {
                 isect.hit_uv = self.uv_at(&isect.hit_point);
                 return true;
 			} else {
-                let t = (-b + f64::sqrt(discriminant)) / (2. * a);
+                let t = (-b + Float::sqrt(discriminant)) / (2. * a);
                 if t > T_MIN && t < T_MAX
                 {
                     isect.t = t;
