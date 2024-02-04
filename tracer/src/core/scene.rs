@@ -1,6 +1,8 @@
+use std::borrow::BorrowMut;
 use std::path::Path;
+use std::sync::Arc;
 
-use math::{Float, Vec3};
+use math::{Float, Quaternion, Vec3};
 
 use crate::cameras::perspective::PerspectiveCamera;
 use crate::core::primitive::Primitive;
@@ -8,6 +10,12 @@ use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
 use crate::core::spectrum::Spectrum;
 use crate::core::transform::Transform;
+use crate::core::shape::Shape;
+use crate::loaders::gltf_loader::GData;
+use crate::materials::LambertMaterial;
+use crate::shapes::mesh::Mesh;
+
+use log::info;
 
 use super::transform;
 
@@ -29,38 +37,66 @@ impl Default for Scene {
 }
 
 impl Scene {
-    fn parse_gltf_mesh(self, mesh: &gltf::Mesh, xform: Transform) {
+    fn parse_gltf<P>(path: P) -> Self 
+        where P: AsRef<Path> {
+        let (doc, buffers, images) = gltf::import(path).unwrap();
+        let data = GData { doc , buffers, images };
 
-    }
+        let mut scene = Scene::default();
 
-    fn parse_gltf_node(self, node: &gltf::Node, parent_xform: Transform) {
-        let xform = parent_xform * Transform::from(&node.transform());
-        if let Some(mesh) = node.mesh() {
+        for node in data.doc.nodes() {
+            Scene::parse_gltf_node(&mut scene, &data, &node, Transform::default());
+        }
+
+        for image in data.images {
 
         }
 
-        // TODO
-        // for child_node in node.children() {
-        //     self.parse_gltf_node(child_node, )
-        // }
+        return scene;
+    }
+
+    fn parse_gltf_node(scene: &mut Scene, data: &GData, node: &gltf::Node, parent_xform: Transform) {
+        let xform = parent_xform * Transform::from(&node.transform());
+
+        for child_node in node.children() {
+            Scene::parse_gltf_node(scene, data, &child_node, xform);
+        }
+
+        if let Some(mesh) = node.mesh() {
+            info!("Node: {:?} - Mesh: {:?} - Transform: {}", node.name(), mesh.name(), xform);
+            Scene::parse_gltf_mesh(scene, data, &mesh, xform);
+        }
+        else if let Some(_) = node.camera() {
+           scene.persp_camera.set_position(&xform.get_position());
+        }
+    }
+
+    fn parse_gltf_mesh(scene: &mut Scene, data: &GData, mesh: &gltf::Mesh, xform: Transform) {
+        for primitive in mesh.primitives() {
+            let mesh = Mesh::from_gltf(&primitive, &data);
+            let mut primitive = Primitive::new(Shape::Mesh(mesh),
+                Option::Some(
+                    Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.5, 0.5))))));
+            primitive.apply_transform(xform);
+            scene.add(primitive);
+        }
+    }
+}
+
+impl<P> From<P> for Scene
+    where P: AsRef<Path> {
+    fn from(path: P) -> Self {
+        if let Some(extension) = path.as_ref().extension() {
+            if extension == "gltf" || extension == "glb" {
+                return Scene::parse_gltf(path);
+            }
+        }
+
+        Scene::default()
     }
 }
 
 impl Scene {
-    pub fn from_gltf<P>(path: P) -> Self
-    where P: AsRef<Path>
-    {
-        let (doc, buffers, images) = gltf::import(path).unwrap();
-
-        let mut primitives = Vec::default();
-
-        Self {
-            primitives,
-            environment_light: |_| Spectrum::ColorRGB(Vec3::from(0.)),
-            persp_camera: PerspectiveCamera::default()
-        }
-    }
-
     pub fn add(&mut self, primitive: Primitive) {
         self.primitives.push(primitive);
     }

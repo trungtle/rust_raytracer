@@ -1,5 +1,6 @@
 use funty::Numeric;
 
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub struct Quaternion<T>
     where T: Numeric {
     pub x: T,

@@ -1,6 +1,6 @@
 use eframe::{egui::{self}, epaint::ColorImage};
 
-use math::{Float, Quaternion, Vec2, Vec3};
+use math::{Float, Vec2, Vec3};
 
 use std::{f64::consts::FRAC_PI_2, path::{Path, PathBuf}};
 use std::{
@@ -17,7 +17,6 @@ use crate::{core::{
     scene::Scene,
     shape::Shape,
     spectrum::Spectrum,
-    transform::{self, Transform},
     view::View
 }, integrators::direct_lighting::RenderSettings};
 
@@ -142,7 +141,7 @@ fn gltf_scene() -> Scene
     let mut camera_position: Vec3 = Vec3::new(0.,25.5,10.);
     let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
 
-    let mut scene = Scene::default();
+    let mut scene = Scene::from("assets/glTF/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
 
     scene.environment_light = |ray| -> Spectrum {
         let t = 0.5 * ray.direction.y + 1.0;
@@ -151,8 +150,8 @@ fn gltf_scene() -> Scene
         return sky_environment;
     };
 
-    //let g_data = loaders::gltf_loader::load_gltf("assets/glTF/Box/glTF/Box.gltf");
-    let g_data = crate::loaders::gltf_loader::load_gltf("assets/glTF/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
+    let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
+    scene.persp_camera = cam;
 
     // Floor
     // scene.add(
@@ -161,42 +160,6 @@ fn gltf_scene() -> Scene
     //             Option::Some(
     //                 Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
 
-    for node in g_data.doc.nodes() {
-        match &node.transform() {
-            gltf::scene::Transform::Matrix { matrix } => {}
-            gltf::scene::Transform::Decomposed { translation, rotation, scale } => {
-                let translation = Vec3::from(translation);
-                let scale = Vec3::from(scale);
-
-                if let Some(mesh) = node.mesh() {
-                    info!("Node: {:?} - Mesh: {:?} - Transform: {:?}", node.name(), mesh.name(), node.transform());
-                    for primitive in mesh.primitives() {
-                        let mesh = Mesh::from_gltf(&primitive, &g_data);
-                        let mut primitive = Primitive::new(Shape::Mesh(mesh),
-                            Option::Some(
-                                Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.5, 0.5))))));
-                        let quat = Quaternion::<Float>::from(rotation);
-                        let rot_mat = math::Mat4::from(&quat);
-                        info!("-- {:?}, {:?}, {:?}", translation, rot_mat, scale);
-                        let transform = Transform::translate(translation) * Transform::from(&rot_mat) * Transform::scale(scale);
-                        primitive.apply_transform(transform);
-                        scene.add(primitive);
-                    }
-                }
-                else if let Some(_) = node.camera() {
-                    camera_position = translation;
-                }
-            }
-        };
-    }
-
-    let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
-    scene.persp_camera = cam;
-
-
-    for image in g_data.images {
-
-    }
 
     return scene;
 }

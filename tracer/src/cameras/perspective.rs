@@ -82,6 +82,10 @@ impl PerspectiveCamera {
         }
     }
 
+    pub fn set_position(&mut self, position: &Vec3) {
+        self.eye = position.clone();
+    }
+
     pub fn get_ray(&self, uv: &Vec2, sampler: &mut Sampler) -> Ray {
         let rp: Vec2 = self.aperture * sampler.sample_unit_disk();
         let offset: Vec3 = self.right * rp.0 + self.up * rp.1;

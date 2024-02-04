@@ -44,10 +44,10 @@ impl From<&gltf::scene::Transform> for Transform {
         match gltf_xform {
             gltf::scene::Transform::Matrix { matrix } => {},
             gltf::scene::Transform::Decomposed { translation, rotation, scale } => {
-                let translation = Vec3::from(translation);
-                let scale = Vec3::from(scale);
-
-                matrix = Transform::translate(translation) * Transform::from(&Quaternion::from(rotation)) * Transform::scale(scale);
+                matrix = 
+                Transform::translate(Vec3::from(translation)) * 
+                Transform::from(&Quaternion::from(rotation)) * 
+                Transform::scale(Vec3::from(scale));
             },
         }
 
@@ -171,5 +171,14 @@ impl ops::Mul<Transform> for Transform {
         let mut out_transform = self.clone();
         out_transform.matrix = out_transform.matrix * _rhs.matrix;
         return out_transform;
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Format
+// -----------------------------------------------------------------------------
+impl std::fmt::Display for Transform {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Position: {}, Scale: {}", self.get_position(), self.get_scale())
     }
 }
