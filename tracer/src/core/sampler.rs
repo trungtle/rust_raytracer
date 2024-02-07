@@ -5,7 +5,16 @@ pub struct Sampler {
     pub rng_generator: ThreadRng
 }
 
+impl Default for Sampler {
+    fn default() -> Self {
+        Self {
+            rng_generator: rand::thread_rng()
+        }
+    }
+}
+
 impl Sampler {
+    // TODO: Delete
     pub fn new() -> Self {
         Self {
             rng_generator: rand::thread_rng()

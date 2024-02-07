@@ -34,14 +34,14 @@ use crate::materials::{
 use crate::cameras::perspective::PerspectiveCamera;
 use crate::integrators::direct_lighting::DirectLightingIntegrator;
 
-const SCREEN_WIDTH: u32 = 100;
-const SCREEN_HEIGHT: u32 = 100;
+const SCREEN_WIDTH: u32 = 400;
+const SCREEN_HEIGHT: u32 = 400;
 const SAMPLES_PER_PIXEL: u8 = 1;
 
 
 fn pbrt4_scene() -> Scene
 {
-    let camera_position: Vec3 = Vec3::new(0.,5.5,-15.5);
+    let camera_position: Vec3 = Vec3::new(0.,5.5,-30.5);
     let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
 
     // Create new camera
@@ -138,14 +138,15 @@ fn pbrt4_scene() -> Scene
 
 fn gltf_scene() -> Scene
 {
-    let mut camera_position: Vec3 = Vec3::new(0.,25.5,10.);
+    let camera_position: Vec3 = Vec3::new(15.,2.5,0.0);
+    // let mut camera_position: Vec3 = Vec3::new(0.,25.5,10.);
     let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
 
     let mut scene = Scene::from("assets/glTF/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
 
     scene.environment_light = |ray| -> Spectrum {
         let t = 0.5 * ray.direction.y + 1.0;
-        let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.5, 0.7, 1.);
+        let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.2, 0.2, 1.);
         let sky_environment = Spectrum::ColorRGB(sky_color);
         return sky_environment;
     };
@@ -154,12 +155,11 @@ fn gltf_scene() -> Scene
     scene.persp_camera = cam;
 
     // Floor
-    // scene.add(
-    //     Primitive::new(
-    //             Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
-    //             Option::Some(
-    //                 Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
-
+    scene.add(
+        Primitive::new(
+                Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
+                Option::Some(
+                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
 
     return scene;
 }
@@ -176,7 +176,7 @@ fn raytracing_weekend_scene() -> Scene
 
     scene.environment_light = |ray| -> Spectrum {
         let t = 0.5 * ray.direction.y + 1.0;
-        let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.5, 0.7, 1.);
+        let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.2, 0.2, 1.);
         let sky_environment = Spectrum::ColorRGB(sky_color);
         return sky_environment;
     };
