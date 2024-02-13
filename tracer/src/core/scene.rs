@@ -92,7 +92,7 @@ impl Scene {
 
     fn parse_gltf_mesh(scene: &mut Scene, data: &GData, mesh: &gltf::Mesh, xform: Transform) {
         for primitive in mesh.primitives() {
-            let mut sampler = Sampler::new();
+            let mut sampler = Sampler::default();
 
             let mesh = Mesh::from_gltf(&primitive, &data);
             let mut primitive = Primitive::new(Shape::Mesh(mesh),

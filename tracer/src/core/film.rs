@@ -15,7 +15,19 @@ pub struct Film {
     pub pixels: Vec<Spectrum>,
 }
 
+impl Default for Film {
+    fn default() -> Self {
+        Self {
+            width: 100,
+            height: 100,
+            file_name: "Image".to_owned(),
+            pixels: vec![Spectrum::ColorRGB(Vec3::from(0.)); 100 as usize * 100 as usize]
+        }
+    }
+}
+
 impl Film {
+    // TODO: new only from pixels. And make it so that pixels is the only struct that's needed.
     pub fn new(width: u32, height: u32, file_name: &str) -> Self {
         Self {
             width,

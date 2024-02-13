@@ -89,7 +89,7 @@ impl DirectLightingIntegrator {
         let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.)); num_pixels];
 
         if render_setings.single_thread {
-            let mut sampler = Sampler::new();
+            let mut sampler = Sampler::default();
 
             // Single threaded version
             for y in (0..view.height).rev() {
@@ -112,7 +112,26 @@ impl DirectLightingIntegrator {
             }
         } else {
             // Parallel version
-            // pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
+            pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
+                let x: u32 = i as u32 % view.width;
+                let y: u32 = i as u32 / view.width;
+                let mut total_spectrum = (0..samples_per_pixel).into_par_iter().
+                map(|_sample| {
+                    let mut sampler = Sampler::default();
+                    let uv: Vec2 = sampler.sample_from_pixel(Vec2 {0: x as Float, 1: y as Float}, view.width, view.height);
+
+                    let ray = scene.persp_camera.get_ray(&uv, &mut sampler);
+                    let Spectrum::ColorRGB(color) = self.li(&scene.clone(), &ray.clone(), &mut sampler);
+                    color
+                }).sum::<Vec3>();
+
+                total_spectrum /= samples_per_pixel as Float;
+                // Gamma correction
+                total_spectrum = Vec3::sqrt(total_spectrum);
+                *pixel = Spectrum::ColorRGB(total_spectrum);
+            });
+            // Uncomment to test parallel thread on samples level.
+            // for i in 0..num_pixels {
             //     let x: u32 = i as u32 % view.width;
             //     let y: u32 = i as u32 / view.width;
             //     let mut total_spectrum = (0..samples_per_pixel).into_par_iter().
@@ -121,33 +140,14 @@ impl DirectLightingIntegrator {
             //         let uv: Vec2 = sampler.sample_from_pixel(Vec2 {0: x as Float, 1: y as Float}, view.width, view.height);
 
             //         let ray = scene.persp_camera.get_ray(&uv, &mut sampler);
-            //         let Spectrum::ColorRGB(color) = self.li(&scene, &ray, &mut sampler);
+            //         let Spectrum::ColorRGB(color) = self.li(&scene.clone(), &ray.clone(), &mut sampler);
             //         color
             //     }).sum::<Vec3>();
-
             //     total_spectrum /= samples_per_pixel as Float;
             //     // Gamma correction
             //     total_spectrum = Vec3::sqrt(total_spectrum);
-            //     *pixel = Spectrum::ColorRGB(total_spectrum);
-            // });
-            // Uncommon to test parallel thread on samples level.
-            for i in 0..num_pixels {
-                let x: u32 = i as u32 % view.width;
-                let y: u32 = i as u32 / view.width;
-                let mut total_spectrum = (0..samples_per_pixel).into_par_iter().
-                map(|_sample| {
-                    let mut sampler = Sampler::new();
-                    let uv: Vec2 = sampler.sample_from_pixel(Vec2 {0: x as Float, 1: y as Float}, view.width, view.height);
-
-                    let ray = scene.persp_camera.get_ray(&uv, &mut sampler);
-                    let Spectrum::ColorRGB(color) = self.li(&scene.clone(), &ray.clone(), &mut sampler);
-                    color
-                }).sum::<Vec3>();
-                total_spectrum /= samples_per_pixel as Float;
-                // Gamma correction
-                total_spectrum = Vec3::sqrt(total_spectrum);
-                pixels[i] = Spectrum::ColorRGB(total_spectrum);
-            }
+            //     pixels[i] = Spectrum::ColorRGB(total_spectrum);
+            // }
 
         }
         return pixels;

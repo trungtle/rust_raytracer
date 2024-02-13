@@ -136,6 +136,7 @@ fn pbrt4_scene() -> Scene
     return scene;
 }
 
+
 fn gltf_scene() -> Scene
 {
     let camera_position: Vec3 = Vec3::new(15.,2.5,0.0);
@@ -306,30 +307,38 @@ impl Default for RustracerApp {
     }
 }
 
-fn test_samplers(width: u32, height: u32) -> Vec<Spectrum> {
-    let num_pixels = width as usize * height as usize;
-    let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.0)); num_pixels];
+struct TestSampler {}
 
-    let num_samples = 1000;
-    let color = Spectrum::ColorRGB(Vec3::from(1.0));
-    let mut sampler = sampler::Sampler::new();
-    for _i in 0..num_samples {
-        // Return a point ranges from -1 to 1
-
-        // Uncomment to sample from unit disk
-        // let random = sampler.random_vec2_0_1();
-        // let mut point = sampler::Sampler::sample_unit_disk_concentric(random);
-        let mut point = sampler.sample_from_pixel( Vec2 {0: 10., 1: 10.}, width, height);
-        point.0 = point.x() * width as Float / 4.0 + width as Float / 2.0;
-        point.1 = point.y() * height as Float / 4.0 + height as Float / 2.0;
-
-        let linear_coords: usize = (point.1 as u32 * width + point.0 as u32) as usize;
-        pixels[linear_coords] = color;
-    }
-
-    return pixels;
+enum SamplerTestOption {
+    UnitDisk,
+    UnitDiskConcentric,
 }
 
+impl TestSampler {
+    fn test_samplers(width: u32, height: u32) -> Vec<Spectrum> {
+        let num_pixels = width as usize * height as usize;
+        let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.0)); num_pixels];
+    
+        let num_samples = 1000;
+        let color = Spectrum::ColorRGB(Vec3::from(1.0));
+        let mut sampler = sampler::Sampler::default();
+        for _i in 0..num_samples {
+            // Return a point ranges from -1 to 1
+    
+            // Uncomment to sample from unit disk
+            let random = sampler.random_vec2_0_1();
+            let mut point = sampler::Sampler::sample_unit_disk_concentric(random);
+            //let mut point = sampler.sample_from_pixel( Vec2 {0: 10., 1: 10.}, width, height);
+            point.0 = point.x() * width as Float / 4.0 + width as Float / 2.0;
+            point.1 = point.y() * height as Float / 4.0 + height as Float / 2.0;
+    
+            let linear_coords: usize = (point.1 as u32 * width + point.0 as u32) as usize;
+            pixels[linear_coords] = color;
+        }
+    
+        return pixels;
+    }    
+}
 
 fn load_image_from_path(path: &std::path::Path) -> Result<eframe::egui::ColorImage, image::ImageError> {
     let image = image::io::Reader::open(path)?.decode()?;
@@ -342,6 +351,12 @@ fn load_image_from_path(path: &std::path::Path) -> Result<eframe::egui::ColorIma
     ))
 }
 
+/// This function initializes the Rustracer application with default settings.
+/// It sets up the scene, view, and render settings for the raytracer.
+/// The default scene is the "raytracing_weekend_scene" which consists of spheres and a ground plane.
+/// The default view is a perspective camera positioned at (0, 0.5, -5.5) and looking towards the origin.
+/// The default render settings include multi-threaded rendering.
+/// The function returns an instance of the RustracerApp struct.
 impl eframe::App for RustracerApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -362,16 +377,25 @@ impl eframe::App for RustracerApp {
             if ui.add(egui::Button::new("Render")).clicked() {
                 self.view = View::new(self.width, self.height, self.sample_per_pixel);
                 self.scene = match self.scene_option {
-                    SceneOption::Spheres => { raytracing_weekend_scene() },
-                    SceneOption::Truck => { gltf_scene() },
-                    SceneOption::FurnaceTest => { furnace_test() },
-                    SceneOption::Pbrt4 => { pbrt4_scene() }
+                    SceneOption::Spheres => raytracing_weekend_scene(),
+                    SceneOption::Truck => gltf_scene(),
+                    SceneOption::FurnaceTest => furnace_test(),
+                    SceneOption::Pbrt4 => pbrt4_scene()
                 };
 
                 let pixels = render(self.view, self.scene.clone(), self.render_settings.clone());
-                //let pixels = test_samplers();
                 // Write to film
                 let mut film = Film::new(SCREEN_WIDTH, SCREEN_HEIGHT, "image");
+                film.set_pixels(pixels);
+                let path = film.write_image();
+                log::info!("Image written to: {:?}", film.file_name);
+                self.image = Some(Arc::new(load_image_from_path(std::path::Path::new(&path)).unwrap()));
+            }
+
+            if ui.add(egui::Button::new("Test sampler")).clicked() {
+                let pixels = test_samplers(self.width, self.height);
+                // Write to film
+                let mut film = Film::new(SCREEN_WIDTH, SCREEN_HEIGHT, "test samplers");
                 film.set_pixels(pixels);
                 let path = film.write_image();
                 log::info!("Image written to: {:?}", film.file_name);

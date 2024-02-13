@@ -14,13 +14,6 @@ impl Default for Sampler {
 }
 
 impl Sampler {
-    // TODO: Delete
-    pub fn new() -> Self {
-        Self {
-            rng_generator: rand::thread_rng()
-        }
-    }
-
     pub fn random_0_1(&mut self) -> Float {
         self.rng_generator.sample(rand::distributions::Uniform::new(0., 1.))
     }
