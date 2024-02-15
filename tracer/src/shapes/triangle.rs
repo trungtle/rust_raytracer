@@ -22,11 +22,6 @@ impl Triangle {
         Vec3::cross(v2v0, v1v0)
     }
 
-    // Get UV for a unit triangle
-    pub fn uv_at(&self, point: &Vec3) -> Vec2 {
-		Vec2 {0: point.y, 1: point.z}
-    }
-
     pub fn intersect(&self, ray: &Ray, isect: &mut SurfaceInteraction) -> bool {
         // Ref: https://www.shadertoy.com/view/MlGcDz
 
@@ -48,7 +43,7 @@ impl Triangle {
         isect.t = t;
         isect.hit_point = Vec3 { x: t, y: u, z: v };
         isect.hit_normal = self.normal_at(&isect.hit_point);
-        isect.hit_uv = self.uv_at(&isect.hit_point);
+        isect.hit_uv = Vec2 { 0: u, 1: v };
         return true;
     }
 }

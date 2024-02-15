@@ -7,6 +7,8 @@ use std::{
     time::Instant,
     sync::Arc
 };
+use strum::IntoEnumIterator;
+use strum_macros::{EnumIter, Display};
 
 use log::info;
 
@@ -147,7 +149,7 @@ fn gltf_scene() -> Scene
 
     scene.environment_light = |ray| -> Spectrum {
         let t = 0.5 * ray.direction.y + 1.0;
-        let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.2, 0.2, 1.);
+        let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.5, 0.7, 1.);
         let sky_environment = Spectrum::ColorRGB(sky_color);
         return sky_environment;
     };
@@ -225,13 +227,6 @@ fn furnace_test() -> Scene
         Spectrum::ColorRGB(Vec3 { x: 0.5, y: 0.5, z: 0.5 })
     };
 
-    // scene.environment_light = |ray| -> Spectrum {
-    //     let t = 0.5 * ray.direction.y + 1.0;
-    //     let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.5, 0.7, 1.);
-    //     let sky_environment = Spectrum::ColorRGB(sky_color);
-    //     return sky_environment;
-    // };
-
     scene.add(
         Primitive::new(
             Shape::Sphere(Sphere::new(Vec3::zero(), 2.)),
@@ -266,8 +261,43 @@ fn render(view: View, scene: Scene, settings: RenderSettings) -> Vec<Spectrum> {
     return pixels;
 }
 
-use strum::IntoEnumIterator;
-use strum_macros::{EnumIter, Display};
+// ------------------------------------------------------------
+// Test sampler
+// ------------------------------------------------------------
+struct TestSampler {}
+
+#[derive(Debug, EnumIter, PartialEq, Clone, Copy, Display)]
+enum SamplerTestOption {
+    UnitDisk,
+    UnitDiskConcentric,
+}
+
+impl TestSampler {
+    fn test_samplers(width: u32, height: u32) -> Vec<Spectrum> {
+        let num_pixels = width as usize * height as usize;
+        let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.0)); num_pixels];
+
+        let num_samples = 1000;
+        let color = Spectrum::ColorRGB(Vec3::from(1.0));
+        let mut sampler = sampler::Sampler::default();
+        for _i in 0..num_samples {
+            // Return a point ranges from -1 to 1
+
+            // Uncomment to sample from unit disk
+            let random = sampler.random_vec2_0_1();
+            let mut point = sampler::Sampler::sample_unit_disk_concentric(random);
+            //let mut point = sampler.sample_from_pixel( Vec2 {0: 10., 1: 10.}, width, height);
+            point.0 = point.x() * width as Float / 4.0 + width as Float / 2.0;
+            point.1 = point.y() * height as Float / 4.0 + height as Float / 2.0;
+
+            let linear_coords: usize = (point.1 as u32 * width + point.0 as u32) as usize;
+            pixels[linear_coords] = color;
+        }
+
+        return pixels;
+    }
+}
+
 
 #[derive(Debug, EnumIter, PartialEq, Clone, Copy, Display)]
 enum SceneOption {
@@ -284,6 +314,8 @@ pub struct RustracerApp {
     sample_per_pixel: u8,
     texture: Option<egui::TextureHandle>,
     pub image: Option<Arc<ColorImage>>,
+    texture_test: Option<egui::TextureHandle>,
+    pub image_test: Option<Arc<ColorImage>>,
     scene_option: SceneOption,
     view: View,
     scene: Scene,
@@ -299,45 +331,14 @@ impl Default for RustracerApp {
             sample_per_pixel: SAMPLES_PER_PIXEL,
             texture: None,
             image: None,
+            texture_test: None,
+            image_test: None,
             scene_option: SceneOption::Spheres,
             view: View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL),
             scene: raytracing_weekend_scene(),
             render_settings: RenderSettings { single_thread: false }
         }
     }
-}
-
-struct TestSampler {}
-
-enum SamplerTestOption {
-    UnitDisk,
-    UnitDiskConcentric,
-}
-
-impl TestSampler {
-    fn test_samplers(width: u32, height: u32) -> Vec<Spectrum> {
-        let num_pixels = width as usize * height as usize;
-        let mut pixels = vec![Spectrum::ColorRGB(Vec3::from(0.0)); num_pixels];
-    
-        let num_samples = 1000;
-        let color = Spectrum::ColorRGB(Vec3::from(1.0));
-        let mut sampler = sampler::Sampler::default();
-        for _i in 0..num_samples {
-            // Return a point ranges from -1 to 1
-    
-            // Uncomment to sample from unit disk
-            let random = sampler.random_vec2_0_1();
-            let mut point = sampler::Sampler::sample_unit_disk_concentric(random);
-            //let mut point = sampler.sample_from_pixel( Vec2 {0: 10., 1: 10.}, width, height);
-            point.0 = point.x() * width as Float / 4.0 + width as Float / 2.0;
-            point.1 = point.y() * height as Float / 4.0 + height as Float / 2.0;
-    
-            let linear_coords: usize = (point.1 as u32 * width + point.0 as u32) as usize;
-            pixels[linear_coords] = color;
-        }
-    
-        return pixels;
-    }    
 }
 
 fn load_image_from_path(path: &std::path::Path) -> Result<eframe::egui::ColorImage, image::ImageError> {
@@ -359,6 +360,30 @@ fn load_image_from_path(path: &std::path::Path) -> Result<eframe::egui::ColorIma
 /// The function returns an instance of the RustracerApp struct.
 impl eframe::App for RustracerApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        egui::SidePanel::left("my_left_panel").show(ctx, |ui| {
+            ui.label("Hello World!");
+         });
+
+        egui::SidePanel::right("my_right_panel").show(ctx, |ui| {
+            if ui.add(egui::Button::new("Test sampler")).clicked() {
+                let pixels = TestSampler::test_samplers(self.width, self.height);
+                // Write to film
+                let mut film = Film::new(SCREEN_WIDTH, SCREEN_HEIGHT, "test samplers");
+                film.set_pixels(pixels);
+                let path = film.write_image();
+                log::info!("Image written to: {:?}", film.file_name);
+                self.image_test = Some(Arc::new(load_image_from_path(std::path::Path::new(&path)).unwrap()));
+            }
+
+            if let Some(image_test) = self.image_test.take() {
+                self.texture_test = Some(ctx.load_texture("image", image_test, Default::default()));
+            }
+
+            if let Some(texture_test) = self.texture_test.as_ref() {
+                ui.image((texture_test.id(), texture_test.size_vec2()));
+            }
+         });
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(self.name.clone());
             ui.label(format!("Width {}, height: {}", self.width, self.height));
@@ -392,20 +417,9 @@ impl eframe::App for RustracerApp {
                 self.image = Some(Arc::new(load_image_from_path(std::path::Path::new(&path)).unwrap()));
             }
 
-            if ui.add(egui::Button::new("Test sampler")).clicked() {
-                let pixels = test_samplers(self.width, self.height);
-                // Write to film
-                let mut film = Film::new(SCREEN_WIDTH, SCREEN_HEIGHT, "test samplers");
-                film.set_pixels(pixels);
-                let path = film.write_image();
-                log::info!("Image written to: {:?}", film.file_name);
-                self.image = Some(Arc::new(load_image_from_path(std::path::Path::new(&path)).unwrap()));
-            }
-
             if let Some(image) = self.image.take() {
                 self.texture = Some(ctx.load_texture("image", image, Default::default()));
             }
-
 
             if let Some(texture) = self.texture.as_ref() {
                 ui.image((texture.id(), texture.size_vec2()));

@@ -92,12 +92,11 @@ impl Scene {
 
     fn parse_gltf_mesh(scene: &mut Scene, data: &GData, mesh: &gltf::Mesh, xform: Transform) {
         for primitive in mesh.primitives() {
-            let mut sampler = Sampler::default();
-
             let mesh = Mesh::from_gltf(&primitive, &data);
+            let color = Spectrum::ColorRGB(Vec3::from(1.0));
             let mut primitive = Primitive::new(Shape::Mesh(mesh),
                 Option::Some(
-                    Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(sampler.random_0_1(), 0.5, 0.5))))));
+                    Arc::new(LambertMaterial::new(color))));
             primitive.apply_transform(xform);
             scene.add(primitive);
         }

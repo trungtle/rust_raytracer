@@ -17,8 +17,8 @@ pub struct Mesh {
 impl Mesh {
     pub fn new(positions: Vec<Vec3>, indices: Vec<u32>) -> Self {
         Self {
-            indices: indices, 
-            positions: positions, 
+            indices: indices,
+            positions: positions,
             uv: Vec::new()
         }
     }
@@ -72,30 +72,29 @@ impl Mesh {
         // UVs
         // TODO: Need to read from multiple UVs sets
         if let Some(read_tex_coords) = reader.read_tex_coords(0) {
-            match read_tex_coords {       
-                // NOTE: Can we just convert from U8, U16 into float like this?         
+            match read_tex_coords {
+                // NOTE: Can we just convert from U8, U16 into float like this?
                 U8(iter) => {
                     for _uv in iter {
                         let u = _uv[0] as Float;
                         let v = _uv[1] as Float;
                         uv.push(Vec2::new(&[u, v]));
-                    }        
+                    }
                 },
                 U16(iter) => {
                     for _uv in iter {
                         let u = _uv[0] as Float;
                         let v = _uv[1] as Float;
                         uv.push(Vec2::new(&[u, v]));
-                    }        
+                    }
                 },
                 F32(iter) => {
                     for _uv in iter {
                         uv.push(Vec2::new(&_uv));
-                    }        
-                },
-                _ => {}
+                    }
+                }
             }
-        }    
+        }
 
         Self {
             indices: indices,

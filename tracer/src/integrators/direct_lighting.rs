@@ -34,7 +34,7 @@ impl DirectLightingIntegrator {
     }
 
     fn li(&self, scene: &Scene, ray: &Ray, sampler: &mut Sampler) -> Spectrum {
-        const MAX_DEPTH: u32 = 10;
+        const MAX_DEPTH: u32 = 1;
 
         let mut acc_color = Spectrum::ColorRGB(Vec3::from(0.0));
         let mut scatter_ray = ray.clone();
@@ -58,6 +58,8 @@ impl DirectLightingIntegrator {
                     match primitive.material {
                         Some(material) => {
                             material_color = material.value().clone();
+                            // TODO: Debug UV
+                           material_color = Spectrum::ColorRGB(Vec3::new(isect.hit_uv.x(), isect.hit_uv.y(), 0.0));
                             material.scatter(&mut scatter_ray, &mut material_color, &isect.hit_point, &isect.hit_normal, sampler);
                         }
                         None => {}
