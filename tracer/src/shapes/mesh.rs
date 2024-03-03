@@ -1,17 +1,23 @@
+use std::primitive;
+
 use gltf;
+use image::GenericImageView;
 use math::{Float, Vec2, Vec3};
 use log::info;
-
+use image::io::Reader as ImageReader;
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
 use crate::loaders::gltf_loader::GData;
+use crate::core::primitive::Primitive;
+use crate::core::shape::Shape;
 use crate::shapes::triangle::Triangle;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Mesh {
     pub indices: Vec<u32>,
     pub positions: Vec<Vec3>,
-    pub uv: Vec<Vec2>
+    pub uv: Vec<Vec2>,
+    pub base_color_texture: image::DynamicImage
 }
 
 impl Mesh {
@@ -19,7 +25,8 @@ impl Mesh {
         Self {
             indices: indices,
             positions: positions,
-            uv: Vec::new()
+            uv: Vec::new(),
+            base_color_texture: image::DynamicImage::new_rgb8(0, 0)
         }
     }
 
@@ -96,10 +103,26 @@ impl Mesh {
             }
         }
 
+        // Textures
+        let mut base_color_texture = image::DynamicImage::new_rgb8(0, 0);
+        if let Some(texture) = primitive.material().pbr_metallic_roughness().base_color_texture() {
+            // TODO: Support multiple uv sets base_color_texture.tex_coord()
+            match texture.texture().source().source() {
+                gltf::image::Source::View { view, mime_type } => {
+                    info!("Image source (view): {:?}", view);
+                },
+                gltf::image::Source::Uri { uri, mime_type } => {
+                    info!("Image source (uri): {:?}", uri);
+                    base_color_texture = ImageReader::open(uri).unwrap().decode().unwrap();
+                }
+            }
+        }
+
         Self {
-            indices: indices,
-            positions: positions,
-            uv: uv
+            indices,
+            positions,
+            uv,
+            base_color_texture
         }
     }
 
@@ -125,7 +148,13 @@ impl Mesh {
                 nearest_isect.t = isect.t;
                 nearest_isect.hit_point = isect.hit_point;
                 nearest_isect.hit_normal = isect.hit_normal;
-                nearest_isect.hit_uv = isect.hit_uv;
+
+                // texture coordinates
+                let st0 = self.uv[self.indices[i] as usize];
+                let st1 = self.uv[self.indices[i+1] as usize];
+                let st2 = self.uv[self.indices[i+2] as usize];
+                let hit_uv = (1.0 - isect.hit_uv.x() - isect.hit_uv.y()) * st0 + isect.hit_uv.x() * st1 + isect.hit_uv.y() * st2;
+                nearest_isect.hit_uv = hit_uv;
             }
         }
 

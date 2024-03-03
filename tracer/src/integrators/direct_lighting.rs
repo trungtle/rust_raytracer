@@ -53,19 +53,13 @@ impl DirectLightingIntegrator {
 
             let mut material_color = Spectrum::ColorRGB(Vec3::from(1.0));
 
-            match isect.hit_primitive {
-                Some(primitive) => {
-                    match primitive.material {
-                        Some(material) => {
-                            material_color = material.value().clone();
-                            // TODO: Debug UV
-                           material_color = Spectrum::ColorRGB(Vec3::new(isect.hit_uv.x(), isect.hit_uv.y(), 0.0));
-                            material.scatter(&mut scatter_ray, &mut material_color, &isect.hit_point, &isect.hit_normal, sampler);
-                        }
-                        None => {}
-                    }
-                },
-                None => {}
+            if let Some(primitive) = isect.hit_primitive {
+                if let Some(material) = primitive.material {
+                    material_color = material.value().clone();
+                    material.scatter(&mut scatter_ray, &mut material_color, &isect.hit_point, &isect.hit_normal, sampler);
+                    // TODO: Debug UV
+                    material_color = Spectrum::ColorRGB(Vec3::new(isect.hit_uv.x(), isect.hit_uv.y(), 0.0));
+                }
             }
 
             // New ray

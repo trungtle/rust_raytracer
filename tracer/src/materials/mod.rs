@@ -83,15 +83,17 @@ impl Material for MetalMaterial {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct LambertMaterial {
-    pub color: Spectrum
+    pub color: Spectrum,
+    pub base_color_texture: Option<image::DynamicImage>
 }
 
 impl LambertMaterial {
     pub fn new(color: Spectrum) -> Self {
         LambertMaterial {
-            color
+            color: color,
+            base_color_texture: None
         }
     }
 }
