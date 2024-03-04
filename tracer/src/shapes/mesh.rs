@@ -8,8 +8,6 @@ use image::io::Reader as ImageReader;
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
 use crate::loaders::gltf_loader::GData;
-use crate::core::primitive::Primitive;
-use crate::core::shape::Shape;
 use crate::shapes::triangle::Triangle;
 
 #[derive(Clone, PartialEq, Debug)]
@@ -108,12 +106,14 @@ impl Mesh {
         if let Some(texture) = primitive.material().pbr_metallic_roughness().base_color_texture() {
             // TODO: Support multiple uv sets base_color_texture.tex_coord()
             match texture.texture().source().source() {
-                gltf::image::Source::View { view, mime_type } => {
+                gltf::image::Source::View { view, mime_type: _ } => {
                     info!("Image source (view): {:?}", view);
                 },
-                gltf::image::Source::Uri { uri, mime_type } => {
-                    info!("Image source (uri): {:?}", uri);
-                    base_color_texture = ImageReader::open(uri).unwrap().decode().unwrap();
+                gltf::image::Source::Uri { uri, mime_type: _ } => {
+                    // TODO: Convert source path to a parameter that's passed in for loading mesh.
+                    let source_path = "assets/glTF/CesiumMilkTruck/glTF/";
+                    info!("Image source (uri): {}{:?}", source_path, uri);
+                    base_color_texture = ImageReader::open(source_path.to_owned() + uri).unwrap().decode().unwrap();
                 }
             }
         }

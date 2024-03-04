@@ -125,16 +125,6 @@ fn pbrt4_scene() -> Scene
         return sky_environment;
     };
 
-    // for shape_entity in pbrt_scene.shapes {
-    //     let shape = shape_entity.params;
-    //     let mesh = Mesh::from_gltf(g_primitive, g_data)
-    //     let mut primitive = Primitive::new(Shape::Mesh(mesh), Option::Some(Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5))))));
-    //     let mut transform = Transform::default();
-    //     // transform = transform * Transform::scale(Vec3 { x: 3.0, y: 3.0, z: 3.0 });
-    //     primitive.apply_transform(transform);
-    //     scene.add(primitive);
-    // }
-
     return scene;
 }
 
@@ -360,11 +350,7 @@ fn load_image_from_path(path: &std::path::Path) -> Result<eframe::egui::ColorIma
 /// The function returns an instance of the RustracerApp struct.
 impl eframe::App for RustracerApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        egui::SidePanel::left("my_left_panel").show(ctx, |ui| {
-            ui.label("Hello World!");
-         });
-
-        egui::SidePanel::right("my_right_panel").show(ctx, |ui| {
+        egui::SidePanel::right("test_panel").show(ctx, |ui| {
             if ui.add(egui::Button::new("Test sampler")).clicked() {
                 let pixels = TestSampler::test_samplers(self.width, self.height);
                 // Write to film
