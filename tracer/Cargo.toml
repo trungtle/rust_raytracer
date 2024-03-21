@@ -26,7 +26,8 @@ egui_extras = { version = "*", features = ["all_loaders"] }
 image = { version = "0.24", features = ["jpeg", "png"] } # Add the types you want support for
 ply-rs = "0.1.3"
 project-root = "0.2.2"
-funty = "2.0.0"
+funty = "2.0.0" # fundamental traits (like numerics)
+rfd = "0.14.0" # File diaglog
 
 [dependencies.gltf]
 version = "0.16"

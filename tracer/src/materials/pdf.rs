@@ -9,14 +9,12 @@ pub trait Pdf {
 }
 
 pub struct UniformPdf {
-    uvw: ONB
+    uvw: ONB,
 }
 
 impl UniformPdf {
     pub fn new(w: &Vec3) -> Self {
-        Self {
-            uvw: ONB::from(w)
-        }
+        Self { uvw: ONB::from(w) }
     }
 }
 
@@ -28,7 +26,6 @@ impl Pdf for UniformPdf {
     fn sample_wi(&self, sampler: &mut Sampler) -> Vec3 {
         // Pick a random point inside a unity sphere tangent to the xy plane,
         // then generate a new direction from it
-        self.uvw.from_local(&(sampler.sample_cosine_direction()))// + Vec3::new(0.,0.,1.)))
+        self.uvw.from_local(&(sampler.sample_cosine_direction())) // + Vec3::new(0.,0.,1.)))
     }
 }
-

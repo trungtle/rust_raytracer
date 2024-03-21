@@ -18,13 +18,24 @@ pub struct Mesh {
     pub base_color_texture: image::DynamicImage
 }
 
+fn load_image_from_path(path: &std::path::Path) -> Result<eframe::egui::ColorImage, image::ImageError> {
+    let image = image::io::Reader::open(path)?.decode()?;
+    let size = [image.width() as _, image.height() as _];
+    let image_buffer = image.to_rgba8();
+    let pixels = image_buffer.as_flat_samples();
+    Ok(eframe::epaint::ColorImage::from_rgba_unmultiplied(
+        size,
+        pixels.as_slice(),
+    ))
+}
+
 impl Mesh {
     pub fn new(positions: Vec<Vec3>, indices: Vec<u32>) -> Self {
         Self {
             indices: indices,
             positions: positions,
             uv: Vec::new(),
-            base_color_texture: image::DynamicImage::new_rgb8(0, 0)
+            base_color_texture: image::DynamicImage::new_rgb8(1, 1)
         }
     }
 
@@ -102,7 +113,7 @@ impl Mesh {
         }
 
         // Textures
-        let mut base_color_texture = image::DynamicImage::new_rgb8(0, 0);
+        let mut base_color_texture = image::DynamicImage::new_rgb8(1, 1);
         if let Some(texture) = primitive.material().pbr_metallic_roughness().base_color_texture() {
             // TODO: Support multiple uv sets base_color_texture.tex_coord()
             match texture.texture().source().source() {
@@ -111,9 +122,12 @@ impl Mesh {
                 },
                 gltf::image::Source::Uri { uri, mime_type: _ } => {
                     // TODO: Convert source path to a parameter that's passed in for loading mesh.
-                    let source_path = "assets/glTF/CesiumMilkTruck/glTF/";
-                    info!("Image source (uri): {}{:?}", source_path, uri);
-                    base_color_texture = ImageReader::open(source_path.to_owned() + uri).unwrap().decode().unwrap();
+                    let path = "assets/glTF/CesiumMilkTruck/glTF/".to_owned() + uri;
+                    info!("Image source (uri): {:?}", path.clone());
+                    base_color_texture = ImageReader::open(path).unwrap().decode().unwrap();
+                    // let base_color = base_color_texture.clone().into_rgb8().get_pixel(1, 1);
+                    // let image_buffer = base_color_texture.to_rgba8();
+                    // let pixels = image_buffer.as_flat_samples();
                 }
             }
         }

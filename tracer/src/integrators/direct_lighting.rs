@@ -63,14 +63,16 @@ impl DirectLightingIntegrator {
                     // TODO: Debug UV
                     let uv = isect.hit_uv;
                     material_color = Spectrum::ColorRGB(Vec3::new(isect.hit_uv.x(), isect.hit_uv.y(), 0.0));
-                    
+
                     match &primitive.shape {
                         Shape::Mesh(mesh) => {
                             let x = (uv.x() * mesh.base_color_texture.width() as Float) as u32;
                             let y = (uv.y() * mesh.base_color_texture.height() as Float) as u32;
-                            let base_color = mesh.base_color_texture.get_pixel(1, 1);
-                            let rgb = base_color.to_rgb();
-                            material_color = Spectrum::ColorRGB(Vec3::new(rgb[0] as f32, rgb[1] as f32, rgb[2] as f32));
+                            let base_color_texture = mesh.base_color_texture.clone().into_rgb8();
+                            if base_color_texture.width() > 1 && base_color_texture.height() > 1 {
+                                let rgb = base_color_texture.get_pixel(x, y);
+                                material_color = Spectrum::ColorRGB(Vec3::new(rgb[0] as f32, rgb[1] as f32, rgb[2] as f32));
+                            }
                         },
                         _ => {}
                     }

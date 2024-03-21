@@ -302,10 +302,17 @@ pub struct RustracerApp {
     width: u32,
     height: u32,
     sample_per_pixel: u8,
-    texture: Option<egui::TextureHandle>,
+
     pub image: Option<Arc<ColorImage>>,
-    texture_test: Option<egui::TextureHandle>,
     pub image_test: Option<Arc<ColorImage>>,
+    pub image_browswer: Option<Arc<ColorImage>>,
+
+    texture: Option<egui::TextureHandle>,
+    texture_test: Option<egui::TextureHandle>,
+    texture_browser: Option<egui::TextureHandle>,
+
+    dropped_files: Vec<egui::DroppedFile>,
+    picked_path: Option<String>,
     scene_option: SceneOption,
     view: View,
     scene: Scene,
@@ -319,10 +326,16 @@ impl Default for RustracerApp {
             width: SCREEN_WIDTH,
             height: SCREEN_HEIGHT,
             sample_per_pixel: SAMPLES_PER_PIXEL,
-            texture: None,
             image: None,
-            texture_test: None,
             image_test: None,
+            image_browswer: None,
+
+            texture: None,
+            texture_test: None,
+            texture_browser: None,
+
+            dropped_files: Vec::new(),
+            picked_path: None,
             scene_option: SceneOption::Spheres,
             view: View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL),
             scene: raytracing_weekend_scene(),
@@ -350,6 +363,31 @@ fn load_image_from_path(path: &std::path::Path) -> Result<eframe::egui::ColorIma
 /// The function returns an instance of the RustracerApp struct.
 impl eframe::App for RustracerApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+
+        egui::SidePanel::left("file").show(ctx, |ui| {
+            if ui.button("Open file…").clicked() {
+                if let Some(path) = rfd::FileDialog::new().pick_file() {
+                    self.picked_path = Some(path.display().to_string());
+                }
+            }
+
+            if let Some(picked_path) = &self.picked_path {
+                ui.horizontal(|ui| {
+                    ui.label("Opened file:");
+                    ui.monospace(picked_path);
+                });
+                self.image_browswer = Some(Arc::new(load_image_from_path(std::path::Path::new(&picked_path)).unwrap()));
+            }
+
+            if let Some(image) = self.image_browswer.take() {
+                self.texture_browser = Some(ctx.load_texture("image_browser", image, Default::default()));
+            }
+
+            if let Some(texture) = self.texture_browser.as_ref() {
+                ui.image((texture.id(), texture.size_vec2()));
+            }
+        });
+
         egui::SidePanel::right("test_panel").show(ctx, |ui| {
             if ui.add(egui::Button::new("Test sampler")).clicked() {
                 let pixels = TestSampler::test_samplers(self.width, self.height);
@@ -399,7 +437,7 @@ impl eframe::App for RustracerApp {
                 let mut film = Film::new(SCREEN_WIDTH, SCREEN_HEIGHT, "image");
                 film.set_pixels(pixels);
                 let path = film.write_image();
-                log::info!("Image written to: {:?}", film.file_name);
+                log::info!("Image written to: {:?}", path);
                 self.image = Some(Arc::new(load_image_from_path(std::path::Path::new(&path)).unwrap()));
             }
 
