@@ -2,6 +2,6 @@
 members= [
     "math",
     "mesh-loader",
-    "tracer",
+    "tracer", "vulkan_rasterizer",
 ]
 
