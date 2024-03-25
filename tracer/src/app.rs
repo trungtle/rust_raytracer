@@ -30,7 +30,8 @@ use crate::shapes::{
 use crate::materials::{
     ConstantMaterial,
     MetalMaterial,
-    LambertMaterial
+    LambertMaterial,
+    DieletricMaterial
 };
 
 use crate::cameras::perspective::PerspectiveCamera;
@@ -178,7 +179,7 @@ fn raytracing_weekend_scene() -> Scene
     Primitive::new(
             Shape::Sphere(Sphere::new(Vec3::new(0., 0., -1.), 0.5)),
             Option::Some(
-                Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.2, 0.5)))))));
+                Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.2, 0.5)))))));
 
     scene.add(
         Primitive::new(
@@ -190,14 +191,14 @@ fn raytracing_weekend_scene() -> Scene
         Primitive::new(
                 Shape::Sphere(Sphere::new(Vec3::new(-1., 0., -1.), 0.5)),
                 Option::Some(
-                    Arc::new(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5)))))));
+                    Arc::new(DieletricMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5)))))));
 
     // Ground
     scene.add(
         Primitive::new(
                 Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
                 Option::Some(
-                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
+                    Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
 
     return scene;
 }

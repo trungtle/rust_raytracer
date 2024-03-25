@@ -37,7 +37,7 @@ impl DirectLightingIntegrator {
 
     fn li(&self, scene: &Scene, ray: &Ray, sampler: &mut Sampler) -> Spectrum {
         // TODO: Turn depth into a paramter
-        const MAX_DEPTH: u32 = 1;
+        const MAX_DEPTH: u32 = 10;
 
         let mut acc_color = Spectrum::ColorRGB(Vec3::from(0.0));
         let mut scatter_ray = ray.clone();
@@ -56,16 +56,16 @@ impl DirectLightingIntegrator {
 
             let mut material_color = Spectrum::ColorRGB(Vec3::from(1.0));
 
-            if let Some(primitive) = isect.hit_primitive {
-                if let Some(material) = primitive.material {
+            if let Some(ref primitive) = isect.hit_primitive {
+                if let Some(ref material) = primitive.material {
                     material_color = material.value().clone();
-                    material.scatter(&mut scatter_ray, &mut material_color, &isect.hit_point, &isect.hit_normal, sampler);
-                    // TODO: Debug UV
-                    let uv = isect.hit_uv;
-                    material_color = Spectrum::ColorRGB(Vec3::new(isect.hit_uv.x(), isect.hit_uv.y(), 0.0));
+                    material.scatter(&mut scatter_ray, &mut material_color, &isect, sampler);
 
                     match &primitive.shape {
                         Shape::Mesh(mesh) => {
+                            // TODO: Debug UV
+                            let uv = isect.hit_uv;
+                            // material_color = Spectrum::ColorRGB(Vec3::new(isect.hit_uv.x(), isect.hit_uv.y(), 0.0));
                             let x = (uv.x() * mesh.base_color_texture.width() as Float) as u32;
                             let y = (uv.y() * mesh.base_color_texture.height() as Float) as u32;
                             let base_color_texture = mesh.base_color_texture.clone().into_rgb8();

@@ -66,6 +66,7 @@ impl Sphere {
                     isect.t = t;
                     isect.hit_point = ray.point_at(t);
                     isect.hit_normal = self.normal_at(&isect.hit_point);
+                    isect.hit_front_face = Vec3::dot(ray.direction, isect.hit_normal) < 0.;
                     isect.hit_uv = self.uv_at(&isect.hit_point);
                     return true;
                 }

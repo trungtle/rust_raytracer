@@ -71,10 +71,11 @@ impl<T> Vector3<T>
             x, y, z
         }
     }
-}
 
-impl<T> Vector3<T> 
-    where T: Floating {
+    pub fn min3(&self) -> T {
+        self.x.min(self.y.min(self.z))
+    }
+
     pub fn sqrt(v: Vector3<T>) -> Vector3<T> {
         Vector3 {
             x: T::sqrt(v.x),
@@ -129,6 +130,13 @@ impl Vector3<Float> {
 
     pub fn reflect(v: Vector3<Float>, n: Vector3<Float>) -> Vector3<Float> {
         return v - n * Float::from(2.) * Vector3::dot(v, n);
+    }
+
+    pub fn refract(v: Vector3<Float>, n: Vector3<Float>, etai_over_etat: Float) -> Vector3<Float> {
+        let cos_theta = 1.0.min(Vector3::dot(-v, n));
+        let r_out_perp =  etai_over_etat * (v + cos_theta * n);
+        let r_out_parallel = -(1.0 - r_out_perp.length2()).abs().sqrt() * n;
+        return r_out_perp + r_out_parallel;
     }
 }
 
