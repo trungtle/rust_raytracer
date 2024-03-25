@@ -356,13 +356,13 @@ impl Renderer {
         let descriptor_set_layout = descriptor_set_layouts
             .get(descriptor_set_layout_index)
             .unwrap();
-        let descriptor_set = PersistentDescriptorSet::new(
-            &descriptor_set_allocator,
-            descriptor_set_layout.clone(),
-            [WriteDescriptorSet::buffer(0, data_buffer.clone())], // 0 is the binding
-            [],
-        )
-        .unwrap();
+        // let descriptor_set = PersistentDescriptorSet::new(
+        //     &descriptor_set_allocator,
+        //     descriptor_set_layout.clone(),
+        //     [WriteDescriptorSet::buffer(0, data_buffer.clone())], // 0 is the binding
+        //     [],
+        // )
+        // .unwrap();
 
         // Create command buffer
         let command_buffer_allocator = StandardCommandBufferAllocator::new(
@@ -379,18 +379,18 @@ impl Renderer {
 
         let work_group_counts = [1024, 1, 1];
 
-        command_buffer_builder
-            .bind_pipeline_compute(compute_pipeline.clone())
-            .unwrap()
-            .bind_descriptor_sets(
-                PipelineBindPoint::Compute,
-                compute_pipeline.layout().clone(),
-                descriptor_set_layout_index as u32,
-                descriptor_set,
-            )
-            .unwrap()
-            .dispatch(work_group_counts)
-            .unwrap();
+        // command_buffer_builder
+        //     .bind_pipeline_compute(compute_pipeline.clone())
+        //     .unwrap()
+        //     .bind_descriptor_sets(
+        //         PipelineBindPoint::Compute,
+        //         compute_pipeline.layout().clone(),
+        //         descriptor_set_layout_index as u32,
+        //         descriptor_set,
+        //     )
+        //     .unwrap()
+        //     .dispatch(work_group_counts)
+        //     .unwrap();
 
         let command_buffer = command_buffer_builder.build().unwrap();
 
