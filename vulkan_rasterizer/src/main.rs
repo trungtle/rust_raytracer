@@ -223,6 +223,48 @@ mod cs {
     }
 }
 
+
+mod vs {
+    vulkano_shaders::shader!{
+        ty: "vertex",
+        src: r"
+            #version 460
+
+            layout(location = 0) in vec2 position;
+
+            void main() {
+                gl_Position = vec4(position, 0.0, 1.0);
+            }
+        ",
+    }
+}
+
+mod fs {
+    vulkano_shaders::shader!{
+        ty: "fragment",
+        src: "
+            #version 460
+
+            layout(location = 0) out vec4 f_color;
+
+            void main() {
+                f_color = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+        ",
+    }
+}
+
+// Graphics
+use vulkano::buffer::BufferContents;
+use vulkano::pipeline::graphics::vertex_input::Vertex;
+
+#[derive(BufferContents, Vertex)]
+#[repr(C)]
+struct MyVertex {
+    #[format(R32G32_SFLOAT)]
+    position: [f32; 2],
+}
+
 struct Renderer {}
 
 impl Renderer {
@@ -304,6 +346,7 @@ impl Renderer {
 
         use vulkano::command_buffer::CopyImageToBufferInfo;
         use vulkano::sync::{self, GpuFuture};
+        use vulkano::pipeline::graphics::color_blend_state::ColorBlendAttachmentState;
 
 
         // Create shader
@@ -430,20 +473,20 @@ impl Renderer {
         // )
         // .unwrap();
 
-        let buf = Buffer::from_iter(
-            memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::TRANSFER_DST,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter: MemoryTypeFilter::PREFER_HOST
-                    | MemoryTypeFilter::HOST_RANDOM_ACCESS,
-                ..Default::default()
-            },
-            (0..1024 * 1024 * 4).map(|_| 0u8),
-        )
-        .expect("failed to create buffer");
+        // let buf = Buffer::from_iter(
+        //     memory_allocator.clone(),
+        //     BufferCreateInfo {
+        //         usage: BufferUsage::TRANSFER_DST,
+        //         ..Default::default()
+        //     },
+        //     AllocationCreateInfo {
+        //         memory_type_filter: MemoryTypeFilter::PREFER_HOST
+        //             | MemoryTypeFilter::HOST_RANDOM_ACCESS,
+        //         ..Default::default()
+        //     },
+        //     (0..1024 * 1024 * 4).map(|_| 0u8),
+        // )
+        // .expect("failed to create buffer");
 
         // // Clear the image with blue
         // builder
@@ -470,10 +513,11 @@ impl Renderer {
 
         use image::{ImageBuffer, Rgba};
 
-        let buffer_content = buf.read().unwrap();
-        let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
-        image.save("image.png").unwrap();
+        // let buffer_content = buf.read().unwrap();
+        // let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
+        // image.save("image.png").unwrap();
 
+        // Create fractal
         let image = Image::new(
             memory_allocator.clone(),
             ImageCreateInfo {
@@ -552,9 +596,158 @@ impl Renderer {
 
         future.wait(None).unwrap();
 
-        let buffer_content = buf.read().unwrap();
-        let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
-        image.save("image.png").unwrap();
+        // let buffer_content = buf.read().unwrap();
+        // let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
+        // image.save("image.png").unwrap();
+
+        // Graphics pipeline
+        let vertex1 = MyVertex { position: [-0.5, -0.5] };
+        let vertex2 = MyVertex { position: [ 0.0,  0.5] };
+        let vertex3 = MyVertex { position: [ 0.5, -0.25] };
+
+        let vertex_buffer = Buffer::from_iter(
+            memory_allocator.clone(),
+            BufferCreateInfo {
+                usage: BufferUsage::VERTEX_BUFFER,
+                ..Default::default()
+            },
+            AllocationCreateInfo {
+                memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+                    | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                ..Default::default()
+            },
+            vec![vertex1, vertex2, vertex3],
+        )
+        .unwrap();
+
+        // Renderpass
+        let render_pass = vulkano::single_pass_renderpass!(
+            device.clone(),
+            attachments: {
+                color: {
+                    format: Format::R8G8B8A8_UNORM,
+                    samples: 1,
+                    load_op: Clear,
+                    store_op: Store,
+                },
+            },
+            pass: {
+                color: [color],
+                depth_stencil: {},
+            },
+        )
+        .unwrap();
+
+        // Framebuffer
+        use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo};
+
+        let view = ImageView::new_default(image.clone()).unwrap();
+        let framebuffer = Framebuffer::new(
+            render_pass.clone(),
+            FramebufferCreateInfo {
+                attachments: vec![view],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        use vulkano::command_buffer::{
+            RenderPassBeginInfo, SubpassBeginInfo, SubpassContents, SubpassEndInfo,
+        };
+
+        let mut builder = AutoCommandBufferBuilder::primary(
+            &command_buffer_allocator,
+            queue.queue_family_index(),
+            CommandBufferUsage::OneTimeSubmit,
+        )
+        .unwrap();
+
+        // Begin renderpass
+        builder
+            .begin_render_pass(
+                RenderPassBeginInfo {
+                    clear_values: vec![Some([0.0, 0.0, 1.0, 1.0].into())],
+                    ..RenderPassBeginInfo::framebuffer(framebuffer.clone())
+                },
+                SubpassBeginInfo {
+                    contents: SubpassContents::Inline,
+                    ..Default::default()
+                },
+            )
+            .unwrap()
+            .end_render_pass(SubpassEndInfo::default())
+            .unwrap();
+
+        let vs = vs::load(device.clone()).expect("failed to create shader module");
+        let fs = fs::load(device.clone()).expect("failed to create shader module");
+
+        use vulkano::pipeline::graphics::input_assembly::InputAssemblyState;
+        use vulkano::pipeline::graphics::vertex_input::Vertex;
+        use vulkano::pipeline::graphics::viewport::{Viewport, ViewportState, GraphicsPipelineCreateInfo};
+        use vulkano::pipeline::GraphicsPipeline;
+        use vulkano::render_pass::Subpass;
+
+        // More on this latter.
+        let viewport = Viewport {
+            offset: [0.0, 0.0],
+            extent: [1024.0, 1024.0],
+            depth_range: 0.0..=1.0,
+        };
+
+        let pipeline = {
+            // A Vulkan shader can in theory contain multiple entry points, so we have to specify
+            // which one.
+            let vs = vs.entry_point("main").unwrap();
+            let fs = fs.entry_point("main").unwrap();
+
+            let vertex_input_state = MyVertex::per_vertex()
+                .definition(&vs.info().input_interface)
+                .unwrap();
+
+            let stages = [
+                PipelineShaderStageCreateInfo::new(vs),
+                PipelineShaderStageCreateInfo::new(fs),
+            ];
+
+            let layout = PipelineLayout::new(
+                device.clone(),
+                PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
+                    .into_pipeline_layout_create_info(device.clone())
+                    .unwrap(),
+            )
+            .unwrap();
+
+            let subpass = Subpass::from(render_pass.clone(), 0).unwrap();
+
+            GraphicsPipeline::new(
+                device.clone(),
+                None,
+                GraphicsPipelineCreateInfo {
+                    // The stages of our pipeline, we have vertex and fragment stages.
+                    stages: stages.into_iter().collect(),
+                    // Describes the layout of the vertex input and how should it behave.
+                    vertex_input_state: Some(vertex_input_state),
+                    // Indicate the type of the primitives (the default is a list of triangles).
+                    input_assembly_state: Some(InputAssemblyState::default()),
+                    // Set the fixed viewport.
+                    viewport_state: Some(ViewportState {
+                        viewports: [viewport].into_iter().collect(),
+                        ..Default::default()
+                    }),
+                    // Ignore these for now.
+                    rasterization_state: Some(RasterizationState::default()),
+                    multisample_state: Some(MultisampleState::default()),
+                    color_blend_state: Some(ColorBlendState::with_attachment_states(
+                        subpass.num_color_attachments(),
+                        ColorBlendAttachmentState::default(),
+                    )),
+                    // This graphics pipeline object concerns the first pass of the render pass.
+                    subpass: Some(subpass.into()),
+                    ..GraphicsPipelineCreateInfo::layout(layout)
+                },
+            )
+            .unwrap()
+        };
 
         println!("Everything succeeded!");
     }
