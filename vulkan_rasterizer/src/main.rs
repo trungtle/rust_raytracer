@@ -168,7 +168,7 @@ mod rhi {
                     .unwrap()[0]
                     .0;
 
-                let (mut swapchain, images) = Swapchain::new(
+                let (swapchain, images) = Swapchain::new(
                     device.clone(),
                     surface.clone(),
                     SwapchainCreateInfo {
@@ -189,89 +189,13 @@ mod rhi {
 }
 
 
-mod cs {
-    vulkano_shaders::shader!{
-        ty: "compute",
-        src: r"
-        #version 460
-
-        layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
-
-        layout(set = 0, binding = 0, rgba8) uniform writeonly image2D img;
-
-        void main() {
-            vec2 norm_coordinates = (gl_GlobalInvocationID.xy + vec2(0.5)) / vec2(imageSize(img));
-            vec2 c = (norm_coordinates - vec2(0.5)) * 2.0 - vec2(1.0, 0.0);
-
-            vec2 z = vec2(0.0, 0.0);
-            float i;
-            for (i = 0.0; i < 1.0; i += 0.005) {
-                z = vec2(
-                    z.x * z.x - z.y * z.y + c.x,
-                    z.y * z.x + z.x * z.y + c.y
-                );
-
-                if (length(z) > 4.0) {
-                    break;
-                }
-            }
-
-            vec4 to_write = vec4(vec3(i), 1.0);
-            imageStore(img, ivec2(gl_GlobalInvocationID.xy), to_write);
-        }
-        ",
-    }
-}
-
-
-mod vs {
-    vulkano_shaders::shader!{
-        ty: "vertex",
-        src: r"
-            #version 460
-
-            layout(location = 0) in vec2 position;
-
-            void main() {
-                gl_Position = vec4(position, 0.0, 1.0);
-            }
-        ",
-    }
-}
-
-mod fs {
-    vulkano_shaders::shader!{
-        ty: "fragment",
-        src: "
-            #version 460
-
-            layout(location = 0) out vec4 f_color;
-
-            void main() {
-                f_color = vec4(1.0, 0.0, 0.0, 1.0);
-            }
-        ",
-    }
-}
-
-// Graphics
-use vulkano::buffer::BufferContents;
-use vulkano::pipeline::graphics::vertex_input::Vertex;
-
-#[derive(BufferContents, Vertex)]
-#[repr(C)]
-struct MyVertex {
-    #[format(R32G32_SFLOAT)]
-    position: [f32; 2],
-}
-
 struct Renderer {}
 
 impl Renderer {
+    // An example of create buffer
     pub fn create_buffer(device: Arc<vulkano::device::Device>) {
-        use vulkano::memory::allocator::StandardMemoryAllocator;
-        use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage};
-        use vulkano::memory::allocator::{AllocationCreateInfo, MemoryTypeFilter};
+        use vulkano::buffer::*;
+        use vulkano::memory::allocator::*;
 
         let memory_allocator = Arc::new(StandardMemoryAllocator::new_default(device.clone()));
 
@@ -321,40 +245,62 @@ impl Renderer {
         info!("Create destination buffer");
     }
 
-    pub fn init_resources(device: Arc<vulkano::device::Device>, queue: Arc<vulkano::device::Queue>) {
-        use vulkano::memory::allocator::StandardMemoryAllocator;
-        use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage};
-        use vulkano::memory::allocator::{AllocationCreateInfo, MemoryTypeFilter};
-
-        use vulkano::pipeline::compute::ComputePipelineCreateInfo;
-        use vulkano::pipeline::layout::PipelineDescriptorSetLayoutCreateInfo;
-        use vulkano::pipeline::{ComputePipeline, PipelineLayout, PipelineShaderStageCreateInfo};
-        use vulkano::pipeline::Pipeline;
-        use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
-        use vulkano::descriptor_set::allocator::StandardDescriptorSetAllocator;
-
-        use vulkano::command_buffer::allocator::{
-            StandardCommandBufferAllocator, StandardCommandBufferAllocatorCreateInfo,
-        };
-        use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage};
-        use vulkano::pipeline::PipelineBindPoint;
-
-        use vulkano::image::{ImageCreateInfo, ImageType, ImageUsage, Image};
-        use vulkano::format::Format;
-        use vulkano::command_buffer::ClearColorImageInfo;
-        use vulkano::format::ClearColorValue;
-
-        use vulkano::command_buffer::CopyImageToBufferInfo;
-        use vulkano::sync::{self, GpuFuture};
-        use vulkano::pipeline::graphics::color_blend_state::ColorBlendAttachmentState;
-
+    pub fn render_fractal(device: Arc<vulkano::device::Device>, queue: Arc<vulkano::device::Queue>) {
+        use image::*;
+        use vulkano::buffer::*;
+        use vulkano::command_buffer::*;
+        use vulkano::command_buffer::allocator::*;
+        use vulkano::descriptor_set::allocator::*;
+        use vulkano::descriptor_set::*;
+        use vulkano::format::*;
+        use vulkano::image::*;
+        use vulkano::image::view::*;
+        use vulkano::memory::allocator::*;
+        use vulkano::pipeline::*;
+        use vulkano::pipeline::layout::*;
+        use vulkano::pipeline::compute::*;
 
         // Create shader
+
+        mod cs {
+            vulkano_shaders::shader!{
+                ty: "compute",
+                src: r"
+                #version 460
+
+                layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+                layout(set = 0, binding = 0, rgba8) uniform writeonly image2D img;
+
+                void main() {
+                    vec2 norm_coordinates = (gl_GlobalInvocationID.xy + vec2(0.5)) / vec2(imageSize(img));
+                    vec2 c = (norm_coordinates - vec2(0.5)) * 2.0 - vec2(1.0, 0.0);
+
+                    vec2 z = vec2(0.0, 0.0);
+                    float i;
+                    for (i = 0.0; i < 1.0; i += 0.005) {
+                        z = vec2(
+                            z.x * z.x - z.y * z.y + c.x,
+                            z.y * z.x + z.x * z.y + c.y
+                        );
+
+                        if (length(z) > 4.0) {
+                            break;
+                        }
+                    }
+
+                    vec4 to_write = vec4(vec3(i), 1.0);
+                    imageStore(img, ivec2(gl_GlobalInvocationID.xy), to_write);
+                }
+                ",
+            }
+        }
+
         let shader = cs::load(device.clone()).expect("failed to create shader module");
 
         let cs = shader.entry_point("main").unwrap();
         let stage = PipelineShaderStageCreateInfo::new(cs);
-        let layout = PipelineLayout::new(
+        let pipeline_layout = PipelineLayout::new(
             device.clone(),
             PipelineDescriptorSetLayoutCreateInfo::from_stages([&stage])
                 .into_pipeline_layout_create_info(device.clone())
@@ -365,47 +311,11 @@ impl Renderer {
         let compute_pipeline = ComputePipeline::new(
             device.clone(),
             None,
-            ComputePipelineCreateInfo::stage_layout(stage, layout),
+            ComputePipelineCreateInfo::stage_layout(stage, pipeline_layout),
         )
         .expect("failed to create compute pipeline");
 
-
-        // Create buffer
         let memory_allocator = Arc::new(StandardMemoryAllocator::new_default(device.clone()));
-
-        let data_iter = 0..65536u32;
-        let data_buffer = Buffer::from_iter(
-            memory_allocator.clone(),
-            BufferCreateInfo {
-                usage: BufferUsage::STORAGE_BUFFER,
-                ..Default::default()
-            },
-            AllocationCreateInfo {
-                memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-                    | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                ..Default::default()
-            },
-            data_iter,
-        )
-        .expect("failed to create buffer");
-
-        // Create descriptors set
-        let descriptor_set_allocator =
-        StandardDescriptorSetAllocator::new(device.clone(), Default::default());
-        let pipeline_layout = compute_pipeline.layout();
-        let descriptor_set_layouts = pipeline_layout.set_layouts();
-
-        let descriptor_set_layout_index = 0;
-        let descriptor_set_layout = descriptor_set_layouts
-            .get(descriptor_set_layout_index)
-            .unwrap();
-        // let descriptor_set = PersistentDescriptorSet::new(
-        //     &descriptor_set_allocator,
-        //     descriptor_set_layout.clone(),
-        //     [WriteDescriptorSet::buffer(0, data_buffer.clone())], // 0 is the binding
-        //     [],
-        // )
-        // .unwrap();
 
         // Create command buffer
         let command_buffer_allocator = StandardCommandBufferAllocator::new(
@@ -420,130 +330,19 @@ impl Renderer {
         )
         .unwrap();
 
-        let work_group_counts = [1024, 1, 1];
-
-        // command_buffer_builder
-        //     .bind_pipeline_compute(compute_pipeline.clone())
-        //     .unwrap()
-        //     .bind_descriptor_sets(
-        //         PipelineBindPoint::Compute,
-        //         compute_pipeline.layout().clone(),
-        //         descriptor_set_layout_index as u32,
-        //         descriptor_set,
-        //     )
-        //     .unwrap()
-        //     .dispatch(work_group_counts)
-        //     .unwrap();
-
-        let command_buffer = command_buffer_builder.build().unwrap();
-
-        // let future = vulkano::sync::now(device.clone())
-        //     .then_execute(queue.clone(), command_buffer)
-        //     .unwrap()
-        //     .then_signal_fence_and_flush()
-        //     .unwrap();
-
-        // future.wait(None).unwrap();
-
-        // let content = data_buffer.read().unwrap();
-        // for (n, val) in content.iter().enumerate() {
-        //     assert_eq!(*val, n as u32 * 12);
-        // }
-
-        // let image = Image::new(
-        //     memory_allocator.clone(),
-        //     ImageCreateInfo {
-        //         image_type: ImageType::Dim2d,
-        //         format: Format::R8G8B8A8_UNORM,
-        //         extent: [1024, 1024, 1],
-        //         usage: ImageUsage::TRANSFER_DST | ImageUsage::TRANSFER_SRC,
-        //         ..Default::default()
-        //     },
-        //     AllocationCreateInfo {
-        //         memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
-        //         ..Default::default()
-        //     },
-        // )
-        // .unwrap();
-
-        // let mut builder = AutoCommandBufferBuilder::primary(
-        //     &command_buffer_allocator,
-        //     queue.queue_family_index(),
-        //     CommandBufferUsage::OneTimeSubmit,
-        // )
-        // .unwrap();
-
-        // let buf = Buffer::from_iter(
-        //     memory_allocator.clone(),
-        //     BufferCreateInfo {
-        //         usage: BufferUsage::TRANSFER_DST,
-        //         ..Default::default()
-        //     },
-        //     AllocationCreateInfo {
-        //         memory_type_filter: MemoryTypeFilter::PREFER_HOST
-        //             | MemoryTypeFilter::HOST_RANDOM_ACCESS,
-        //         ..Default::default()
-        //     },
-        //     (0..1024 * 1024 * 4).map(|_| 0u8),
-        // )
-        // .expect("failed to create buffer");
-
-        // // Clear the image with blue
-        // builder
-        // .clear_color_image(ClearColorImageInfo {
-        //     clear_value: ClearColorValue::Float([0.0, 0.0, 1.0, 1.0]),
-        //     ..ClearColorImageInfo::image(image.clone())
-        // })
-        // .unwrap()
-        // .copy_image_to_buffer(CopyImageToBufferInfo::image_buffer(
-        //     image.clone(),
-        //     buf.clone(),
-        // ))
-        // .unwrap();
-
-        // let command_buffer = builder.build().unwrap();
-
-        // let future = sync::now(device.clone())
-        //     .then_execute(queue.clone(), command_buffer)
-        //     .unwrap()
-        //     .then_signal_fence_and_flush()
-        //     .unwrap();
-
-        // future.wait(None).unwrap();
-
-        use image::{ImageBuffer, Rgba};
-
-        // let buffer_content = buf.read().unwrap();
-        // let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
-        // image.save("image.png").unwrap();
-
-        // Create fractal
-        let image = Image::new(
+        let image = vulkano::image::Image::new(
             memory_allocator.clone(),
             ImageCreateInfo {
                 image_type: ImageType::Dim2d,
                 format: Format::R8G8B8A8_UNORM,
                 extent: [1024, 1024, 1],
-                usage: ImageUsage::STORAGE | ImageUsage::TRANSFER_SRC,
+                usage: ImageUsage::TRANSFER_DST | ImageUsage::TRANSFER_SRC,
                 ..Default::default()
             },
             AllocationCreateInfo {
                 memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
                 ..Default::default()
             },
-        )
-        .unwrap();
-
-        use vulkano::image::view::ImageView;
-
-        let view = ImageView::new_default(image.clone()).unwrap();
-
-        let layout = compute_pipeline.layout().set_layouts().get(0).unwrap();
-        let set = PersistentDescriptorSet::new(
-            &descriptor_set_allocator,
-            layout.clone(),
-            [WriteDescriptorSet::image_view(0, view.clone())], // 0 is the binding
-            [],
         )
         .unwrap();
 
@@ -562,23 +361,68 @@ impl Renderer {
         )
         .expect("failed to create buffer");
 
-        let mut builder = AutoCommandBufferBuilder::primary(
-            &command_buffer_allocator,
-            queue.queue_family_index(),
-            CommandBufferUsage::OneTimeSubmit,
+        // Clear the image with blue
+        command_buffer_builder
+        .clear_color_image(ClearColorImageInfo {
+            clear_value: ClearColorValue::Float([0.0, 0.0, 1.0, 1.0]),
+            ..ClearColorImageInfo::image(image.clone())
+        })
+        .unwrap()
+        .copy_image_to_buffer(CopyImageToBufferInfo::image_buffer(
+            image.clone(),
+            buf.clone(),
+        ))
+        .unwrap();
+
+        // Create fractal
+        let image = Image::new(
+            memory_allocator.clone(),
+            ImageCreateInfo {
+                image_type: ImageType::Dim2d,
+                format: Format::R8G8B8A8_UNORM,
+                extent: [1024, 1024, 1],
+                usage: ImageUsage::STORAGE | ImageUsage::TRANSFER_SRC,
+                ..Default::default()
+            },
+            AllocationCreateInfo {
+                memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
+                ..Default::default()
+            },
         )
         .unwrap();
-        builder
+
+        // Allocate descriptors set
+        let descriptor_set_allocator =
+        StandardDescriptorSetAllocator::new(device.clone(), Default::default());
+        let pipeline_layout = compute_pipeline.layout();
+        let descriptor_set_layouts = pipeline_layout.set_layouts();
+
+        // Write descriptor set
+        let descriptor_set_layout_index = 0;
+        let descriptor_set_layout = descriptor_set_layouts
+            .get(descriptor_set_layout_index)
+            .unwrap();
+        let descriptor_set = PersistentDescriptorSet::new(
+            &descriptor_set_allocator,
+            descriptor_set_layout.clone(),
+            [WriteDescriptorSet::image_view(0, ImageView::new_default(image.clone()).unwrap())], // 0 is the binding
+            [],
+        )
+        .unwrap();
+
+        let work_group_counts = [1024 / 8, 1024 / 8, 1];
+
+        command_buffer_builder
             .bind_pipeline_compute(compute_pipeline.clone())
             .unwrap()
             .bind_descriptor_sets(
                 PipelineBindPoint::Compute,
                 compute_pipeline.layout().clone(),
-                0,
-                set,
+                descriptor_set_layout_index as u32,
+                descriptor_set,
             )
             .unwrap()
-            .dispatch([1024 / 8, 1024 / 8, 1])
+            .dispatch(work_group_counts)
             .unwrap()
             .copy_image_to_buffer(CopyImageToBufferInfo::image_buffer(
                 image.clone(),
@@ -586,25 +430,57 @@ impl Renderer {
             ))
             .unwrap();
 
-        let command_buffer = builder.build().unwrap();
+        let command_buffer = command_buffer_builder.build().unwrap();
 
-        let future = sync::now(device.clone())
-        .then_execute(queue.clone(), command_buffer)
-        .unwrap()
-        .then_signal_fence_and_flush()
-        .unwrap();
+        let future = vulkano::sync::now(device.clone())
+            .then_execute(queue.clone(), command_buffer)
+            .unwrap()
+            .then_signal_fence_and_flush()
+            .unwrap();
 
         future.wait(None).unwrap();
 
-        // let buffer_content = buf.read().unwrap();
-        // let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
-        // image.save("image.png").unwrap();
+        let buffer_content = buf.read().unwrap();
+        let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
+        image.save("image_fractal.png").unwrap();
+    }
 
-        // Graphics pipeline
-        let vertex1 = MyVertex { position: [-0.5, -0.5] };
-        let vertex2 = MyVertex { position: [ 0.0,  0.5] };
-        let vertex3 = MyVertex { position: [ 0.5, -0.25] };
+    pub fn render_base(device: Arc<vulkano::device::Device>, queue: Arc<vulkano::device::Queue>) {
+        use vulkano::buffer::*;
+        use vulkano::command_buffer::*;
+        use vulkano::command_buffer::allocator::*;
+        use vulkano::descriptor_set::*;
+        use vulkano::descriptor_set::allocator::*;
+        use vulkano::format::*;
+        use vulkano::image::*;
+        use vulkano::image::view::*;
+        use vulkano::memory::allocator::*;
+        use vulkano::pipeline::*;
+        use vulkano::pipeline::graphics::*;
+        use vulkano::pipeline::graphics::color_blend::*;
+        use vulkano::pipeline::graphics::input_assembly::*;
+        use vulkano::pipeline::graphics::multisample::*;
+        use vulkano::pipeline::graphics::rasterization::*;
+        use vulkano::pipeline::graphics::vertex_input::*;
+        use vulkano::pipeline::graphics::viewport::*;
+        use vulkano::pipeline::layout::*;
+        use vulkano::render_pass::*;
 
+        // ---- Setup resources ----
+        let memory_allocator = Arc::new(StandardMemoryAllocator::new_default(device.clone()));
+        #[derive(BufferContents, Vertex)]
+        #[repr(C)]
+        struct VertexPositionOnly {
+            #[format(R32G32_SFLOAT)]
+            position: [f32; 2],
+        }
+
+        // Base triangle
+        let vertex1 = VertexPositionOnly { position: [-0.5, -0.5] };
+        let vertex2 = VertexPositionOnly { position: [ 0.0,  0.5] };
+        let vertex3 = VertexPositionOnly { position: [ 0.5, -0.25] };
+
+        // Create vertex buffer from host data
         let vertex_buffer = Buffer::from_iter(
             memory_allocator.clone(),
             BufferCreateInfo {
@@ -619,6 +495,73 @@ impl Renderer {
             vec![vertex1, vertex2, vertex3],
         )
         .unwrap();
+
+        // Image used to draw the triangle renders
+        let image = vulkano::image::Image::new(
+            memory_allocator.clone(),
+            ImageCreateInfo {
+                image_type: ImageType::Dim2d,
+                format: Format::R8G8B8A8_UNORM,
+                extent: [1024, 1024, 1],
+                usage: ImageUsage::COLOR_ATTACHMENT | ImageUsage::TRANSFER_SRC,
+                ..Default::default()
+            },
+            AllocationCreateInfo {
+                memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let view = ImageView::new_default(image.clone()).unwrap();
+
+        // Output buffer for saving into file
+        let out_buf = Buffer::from_iter(
+            memory_allocator.clone(),
+            BufferCreateInfo {
+                usage: BufferUsage::TRANSFER_DST,
+                ..Default::default()
+            },
+            AllocationCreateInfo {
+                memory_type_filter: MemoryTypeFilter::PREFER_HOST
+                    | MemoryTypeFilter::HOST_RANDOM_ACCESS,
+                ..Default::default()
+            },
+            (0..1024 * 1024 * 4).map(|_| 0u8),
+        )
+        .expect("failed to create buffer");
+
+        mod vs {
+            vulkano_shaders::shader!{
+                ty: "vertex",
+                src: r"
+                    #version 460
+
+                    layout(location = 0) in vec2 position;
+
+                    void main() {
+                        gl_Position = vec4(position, 0.0, 1.0);
+                    }
+                ",
+            }
+        }
+
+        mod fs {
+            vulkano_shaders::shader!{
+                ty: "fragment",
+                src: "
+                    #version 460
+
+                    layout(location = 0) out vec4 f_color;
+
+                    void main() {
+                        f_color = vec4(1.0, 0.0, 0.0, 1.0);
+                    }
+                ",
+            }
+        }
+
+        let vs = vs::load(device.clone()).expect("failed to create shader module");
+        let fs = fs::load(device.clone()).expect("failed to create shader module");
 
         // Renderpass
         let render_pass = vulkano::single_pass_renderpass!(
@@ -639,55 +582,15 @@ impl Renderer {
         .unwrap();
 
         // Framebuffer
-        use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo};
-
-        let view = ImageView::new_default(image.clone()).unwrap();
         let framebuffer = Framebuffer::new(
             render_pass.clone(),
             FramebufferCreateInfo {
-                attachments: vec![view],
+                attachments: vec![view.clone()],
                 ..Default::default()
             },
         )
         .unwrap();
 
-        use vulkano::command_buffer::{
-            RenderPassBeginInfo, SubpassBeginInfo, SubpassContents, SubpassEndInfo,
-        };
-
-        let mut builder = AutoCommandBufferBuilder::primary(
-            &command_buffer_allocator,
-            queue.queue_family_index(),
-            CommandBufferUsage::OneTimeSubmit,
-        )
-        .unwrap();
-
-        // Begin renderpass
-        builder
-            .begin_render_pass(
-                RenderPassBeginInfo {
-                    clear_values: vec![Some([0.0, 0.0, 1.0, 1.0].into())],
-                    ..RenderPassBeginInfo::framebuffer(framebuffer.clone())
-                },
-                SubpassBeginInfo {
-                    contents: SubpassContents::Inline,
-                    ..Default::default()
-                },
-            )
-            .unwrap()
-            .end_render_pass(SubpassEndInfo::default())
-            .unwrap();
-
-        let vs = vs::load(device.clone()).expect("failed to create shader module");
-        let fs = fs::load(device.clone()).expect("failed to create shader module");
-
-        use vulkano::pipeline::graphics::input_assembly::InputAssemblyState;
-        use vulkano::pipeline::graphics::vertex_input::Vertex;
-        use vulkano::pipeline::graphics::viewport::{Viewport, ViewportState, GraphicsPipelineCreateInfo};
-        use vulkano::pipeline::GraphicsPipeline;
-        use vulkano::render_pass::Subpass;
-
-        // More on this latter.
         let viewport = Viewport {
             offset: [0.0, 0.0],
             extent: [1024.0, 1024.0],
@@ -695,12 +598,10 @@ impl Renderer {
         };
 
         let pipeline = {
-            // A Vulkan shader can in theory contain multiple entry points, so we have to specify
-            // which one.
             let vs = vs.entry_point("main").unwrap();
             let fs = fs.entry_point("main").unwrap();
 
-            let vertex_input_state = MyVertex::per_vertex()
+            let vertex_input_state = VertexPositionOnly::per_vertex()
                 .definition(&vs.info().input_interface)
                 .unwrap();
 
@@ -749,7 +650,86 @@ impl Renderer {
             .unwrap()
         };
 
-        println!("Everything succeeded!");
+        // NOTE: Uncomment if our vs and fs has descriptor set
+        // Allocate descriptors set
+        // let descriptor_set_allocator = StandardDescriptorSetAllocator::new(device.clone(), Default::default());
+        // let pipeline_layout = pipeline.layout();
+        // let descriptor_set_layouts = pipeline_layout.set_layouts();
+
+        // // Write descriptor set
+        // let descriptor_set_layout_index = 0;
+        // let descriptor_set_layout = descriptor_set_layouts
+        //     .get(descriptor_set_layout_index)
+        //     .unwrap();
+        // let descriptor_set = PersistentDescriptorSet::new(
+        //     &descriptor_set_allocator,
+        //     descriptor_set_layout.clone(),
+        //     [WriteDescriptorSet::image_view(0, view.clone())], // 0 is the binding
+        //     [],
+        // )
+        // .unwrap();
+
+        let command_buffer_allocator = StandardCommandBufferAllocator::new(
+            device.clone(),
+            StandardCommandBufferAllocatorCreateInfo::default(),
+        );
+
+        let mut command_buffer_builder = AutoCommandBufferBuilder::primary(
+            &command_buffer_allocator,
+            queue.queue_family_index(),
+            CommandBufferUsage::OneTimeSubmit,
+        )
+        .unwrap();
+
+        // --- Draw --- //
+        command_buffer_builder
+            .begin_render_pass(
+                RenderPassBeginInfo {
+                    clear_values: vec![Some([0.0, 0.0, 1.0, 1.0].into())],
+                    ..RenderPassBeginInfo::framebuffer(framebuffer.clone())
+                },
+                SubpassBeginInfo {
+                    contents: SubpassContents::Inline,
+                    ..Default::default()
+                },
+            )
+            .unwrap()
+            .bind_pipeline_graphics(pipeline.clone())
+            .unwrap()
+            // NOTE: Uncomment if our vs and fs has descriptor set
+            // .bind_descriptor_sets(
+            //     PipelineBindPoint::Graphics,
+            //     pipeline.layout().clone(),
+            //     descriptor_set_layout_index as u32,
+            //     descriptor_set,
+            // )
+            // .unwrap()
+            .bind_vertex_buffers(0, vertex_buffer.clone())
+            .unwrap()
+            .draw(3, 1, 0, 0)
+            .unwrap()
+            .end_render_pass(SubpassEndInfo::default())
+            .unwrap()
+            .copy_image_to_buffer(CopyImageToBufferInfo::image_buffer(image, out_buf.clone()))
+            .unwrap();
+
+        let command_buffer = command_buffer_builder.build().unwrap();
+
+        let future = vulkano::sync::now(device.clone())
+            .then_execute(queue.clone(), command_buffer)
+            .unwrap()
+            .then_signal_fence_and_flush()
+            .unwrap();
+        future.wait(None).unwrap();
+
+        let buffer_content = out_buf.read().unwrap();
+        let image = image::ImageBuffer::<image::Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
+        image.save("image_triangle.png").unwrap();
+
+        info!("Render base triangle");
+    }
+
+    pub fn init_resources(device: Arc<vulkano::device::Device>, queue: Arc<vulkano::device::Queue>) {
     }
 
 }
@@ -766,6 +746,11 @@ impl App {
 
             Renderer::create_buffer(device.device.clone());
             Renderer::init_resources(device.device.clone(), device.queue.clone());
+            Renderer::render_fractal(device.device.clone(), device.queue.clone());
+            Renderer::render_base(device.device.clone(), device.queue.clone());
+
+            info!("Everything succeeded!");
+
         }
 
         Ok(Self {})
