@@ -4,3 +4,4 @@
 *.lock
 Cargo.lock
 *.lock
+*.lock
