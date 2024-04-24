@@ -1,5 +1,5 @@
 use gltf;
-use log::{info, debug};
+use log::{debug, info};
 
 pub struct GData {
     pub doc: gltf::Document,
@@ -7,8 +7,7 @@ pub struct GData {
     pub images: Vec<gltf::image::Data>,
 }
 
-pub fn load_gltf(path: &str) -> GData
-{
+pub fn load_gltf(path: &str) -> GData {
     let (doc, buffers, images) = gltf::import(path).unwrap();
     info!("Node");
     for node in doc.nodes() {
@@ -18,20 +17,20 @@ pub fn load_gltf(path: &str) -> GData
             info!("Mesh #{} {:?}", mesh.index(), mesh.name());
             for primitive in mesh.primitives() {
                 info!("- Primitive #{}", primitive.index());
-        
-                    // Attributes
-                    for (semantic, _) in primitive.attributes() {
-                        info!("-- {:?}", semantic);
-                    }
-        
-                    // Positions
+
+                // Attributes
+                for (semantic, _) in primitive.attributes() {
+                    info!("-- {:?}", semantic);
+                }
+
+                // Positions
                 let reader = primitive.reader(|buffer| Some(&buffers[buffer.index()]));
                 if let Some(iter) = reader.read_positions() {
                     for vertex_position in iter {
                         debug!("{:?}", vertex_position);
                     }
                 }
-        
+
                 // Indices
                 let reader = primitive.reader(|buffer| Some(&buffers[buffer.index()]));
                 if let Some(iter) = reader.read_indices() {
@@ -39,10 +38,10 @@ pub fn load_gltf(path: &str) -> GData
                         debug!("{:?}", index);
                     }
                 }
-            }        
+            }
         }
     }
-    
+
     info!("Materials:");
     for material in doc.materials() {
         info!("-- {:?}", material.name());
@@ -53,15 +52,19 @@ pub fn load_gltf(path: &str) -> GData
         info!("-- {:?}", texture.name());
     }
 
-    info!("Images:"); 
+    info!("Images:");
     for image in doc.images() {
         info!("-- {:?}", image.name());
     }
 
-    info!("Buffers:"); 
+    info!("Buffers:");
     for buffer in doc.buffers() {
         info!("-- {:?}", buffer.name());
     }
 
-    return GData { doc, buffers, images };
+    return GData {
+        doc,
+        buffers,
+        images,
+    };
 }

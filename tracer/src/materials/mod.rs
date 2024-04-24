@@ -1,22 +1,25 @@
-
 pub mod matte;
 pub mod pdf;
 
 use core::fmt::Debug;
+use math::Float;
 use math::Vec3;
 
-use crate::core::interaction;
-use crate::materials::{
-    pdf::Pdf,
-    pdf::UniformPdf
-};
+use crate::materials::{pdf::Pdf, pdf::UniformPdf};
 
-use crate::core::{spectrum::Spectrum, ray::Ray, interaction::SurfaceInteraction, sampler:: Sampler};
+use crate::core::{
+    interaction::SurfaceInteraction, ray::Ray, sampler::Sampler, spectrum::Spectrum,
+};
 
 pub trait Material: Send + Sync {
     fn value(&self) -> Spectrum;
-    fn scatter(&self,
-        ray: &mut Ray, attenuation: &mut Spectrum, interaction: &SurfaceInteraction, sampler: &mut Sampler) -> bool;
+    fn scatter(
+        &self,
+        ray: &mut Ray,
+        attenuation: &mut Spectrum,
+        interaction: &SurfaceInteraction,
+        sampler: &mut Sampler,
+    ) -> bool;
 }
 
 impl Debug for dyn Material {
@@ -33,14 +36,12 @@ impl PartialEq for dyn Material {
 
 #[derive(Copy, Clone, Debug)]
 pub struct ConstantMaterial {
-    pub color: Spectrum
+    pub color: Spectrum,
 }
 
 impl ConstantMaterial {
     pub fn new(color: Spectrum) -> Self {
-        ConstantMaterial {
-            color
-        }
+        ConstantMaterial { color }
     }
 }
 
@@ -48,8 +49,13 @@ impl Material for ConstantMaterial {
     fn value(&self) -> Spectrum {
         self.color
     }
-    fn scatter(&self,
-        ray: &mut Ray, attenuation: &mut Spectrum, interaction: &SurfaceInteraction, sampler: &mut Sampler) -> bool {
+    fn scatter(
+        &self,
+        ray: &mut Ray,
+        attenuation: &mut Spectrum,
+        interaction: &SurfaceInteraction,
+        sampler: &mut Sampler,
+    ) -> bool {
         let uniform_pdf = UniformPdf::new(&interaction.hit_normal);
         ray.direction = uniform_pdf.sample_wi(sampler);
         *attenuation = self.color;
@@ -59,14 +65,12 @@ impl Material for ConstantMaterial {
 
 #[derive(Copy, Clone, Debug)]
 pub struct MetalMaterial {
-    pub color: Spectrum
+    pub color: Spectrum,
 }
 
 impl MetalMaterial {
     pub fn new(color: Spectrum) -> Self {
-        MetalMaterial {
-            color
-        }
+        MetalMaterial { color }
     }
 }
 
@@ -75,8 +79,13 @@ impl Material for MetalMaterial {
         self.color
     }
 
-    fn scatter(&self,
-        ray: &mut Ray, attenuation: &mut Spectrum, interaction: &SurfaceInteraction, sampler: &mut Sampler) -> bool {
+    fn scatter(
+        &self,
+        ray: &mut Ray,
+        attenuation: &mut Spectrum,
+        interaction: &SurfaceInteraction,
+        sampler: &mut Sampler,
+    ) -> bool {
         ray.origin = interaction.hit_point.clone();
         ray.direction = Vec3::reflect(ray.direction, interaction.hit_normal.clone());
         *attenuation = self.color;
@@ -87,14 +96,14 @@ impl Material for MetalMaterial {
 #[derive(Clone, Debug)]
 pub struct LambertMaterial {
     pub color: Spectrum,
-    pub base_color_texture: Option<image::DynamicImage>
+    pub base_color_texture: Option<image::DynamicImage>,
 }
 
 impl LambertMaterial {
     pub fn new(color: Spectrum) -> Self {
         LambertMaterial {
             color: color,
-            base_color_texture: None
+            base_color_texture: None,
         }
     }
 }
@@ -104,8 +113,13 @@ impl Material for LambertMaterial {
         self.color
     }
 
-    fn scatter(&self,
-        ray: &mut Ray, attenuation: &mut Spectrum, interaction: &SurfaceInteraction, sampler: &mut Sampler) -> bool {
+    fn scatter(
+        &self,
+        ray: &mut Ray,
+        attenuation: &mut Spectrum,
+        interaction: &SurfaceInteraction,
+        sampler: &mut Sampler,
+    ) -> bool {
         let uniform_pdf = UniformPdf::new(&interaction.hit_normal);
         ray.direction = uniform_pdf.sample_wi(sampler);
         *attenuation = self.color;
@@ -113,18 +127,19 @@ impl Material for LambertMaterial {
     }
 }
 
-
 #[derive(Clone, Debug)]
 pub struct DieletricMaterial {
+    pub eta: Float,
     pub color: Spectrum,
-    pub base_color_texture: Option<image::DynamicImage>
+    pub base_color_texture: Option<image::DynamicImage>,
 }
 
 impl DieletricMaterial {
     pub fn new(color: Spectrum) -> Self {
         DieletricMaterial {
+            eta: 1.5,
             color: color,
-            base_color_texture: None
+            base_color_texture: None,
         }
     }
 }
@@ -134,9 +149,14 @@ impl Material for DieletricMaterial {
         self.color
     }
 
-    fn scatter(&self,
-        ray: &mut Ray, attenuation: &mut Spectrum, interaction: &SurfaceInteraction, sampler: &mut Sampler) -> bool {
-        ray.origin = interaction.hit_point.clone();
+    fn scatter(
+        &self,
+        ray: &mut Ray,
+        attenuation: &mut Spectrum,
+        interaction: &SurfaceInteraction,
+        sampler: &mut Sampler,
+    ) -> bool {
+        ray.origin = interaction.hit_point.clone() + sampler.sample_from_unit_sphere() * 0.1;
 
         let ir = 1.5;
         let refraction_ratio = if interaction.hit_front_face {
@@ -149,8 +169,10 @@ impl Material for DieletricMaterial {
         } else {
             -interaction.hit_normal.clone()
         };
-        ray.direction = Vec3::refract(ray.direction, normal, refraction_ratio);
-        *attenuation = Spectrum::ColorRGB(Vec3::from(1.0));
+        //ray.direction = Vec3::refract(ray.direction, normal, refraction_ratio);
+        ray.direction = ray.direction + sampler.sample_from_unit_sphere() * 0.1;
+        ray.direction = ray.direction.normalize();
+        *attenuation = Spectrum::ColorRGB(Vec3::from(1.0)) * *attenuation;
         return true;
     }
 }

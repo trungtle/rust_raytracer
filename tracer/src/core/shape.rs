@@ -10,7 +10,7 @@ use super::Transform;
 pub enum Shape {
     Mesh(Mesh),
     Sphere(Sphere),
-    Triangle(Triangle)
+    Triangle(Triangle),
 }
 
 impl Shape {

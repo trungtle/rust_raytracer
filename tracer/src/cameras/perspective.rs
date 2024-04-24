@@ -1,13 +1,11 @@
 use math::{Float, Vec2, Vec3};
 
-use crate::core::{
-    ray::Ray,
-    sampler::Sampler,
-};
+use crate::core::{ray::Ray, sampler::Sampler};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct PerspectiveCamera {
-    width: u32, height: u32,
+    width: u32,
+    height: u32,
     eye: Vec3,
     look_at: Vec3,
     vfov: Float,
@@ -39,7 +37,7 @@ impl Default for PerspectiveCamera {
             up: Vec3::zero(),
             lower_left: Vec3::zero(),
             horizontal: Vec3::zero(),
-            vertical: Vec3::zero()
+            vertical: Vec3::zero(),
         }
     }
 }
@@ -56,17 +54,23 @@ impl PerspectiveCamera {
         let half_height = (theta * 0.5).tan();
         let half_width = half_height * aspect;
 
-        const WORLD_UP: Vec3 = Vec3 {x: 0.,y: 1.,z: 0.};
+        const WORLD_UP: Vec3 = Vec3 {
+            x: 0.,
+            y: 1.,
+            z: 0.,
+        };
         let forward = (look_at - eye).normalize();
         let right = Vec3::cross(WORLD_UP, forward);
         let up = Vec3::cross(forward, right);
 
-        let lower_left = eye - half_width * focus_dist * right - half_height * focus_dist * up + focus_dist * forward;
+        let lower_left = eye - half_width * focus_dist * right - half_height * focus_dist * up
+            + focus_dist * forward;
         let horizontal = 2. * half_width * focus_dist * right;
         let vertical = 2. * half_height * focus_dist * up;
 
         Self {
-            width, height,
+            width,
+            height,
             eye: eye,
             look_at: look_at,
             vfov: vfov,
@@ -78,7 +82,7 @@ impl PerspectiveCamera {
             up: up,
             lower_left: lower_left,
             horizontal: horizontal,
-            vertical: vertical
+            vertical: vertical,
         }
     }
 
@@ -89,6 +93,9 @@ impl PerspectiveCamera {
     pub fn get_ray(&self, uv: &Vec2, sampler: &mut Sampler) -> Ray {
         let rp: Vec2 = self.aperture * sampler.sample_unit_disk();
         let offset: Vec3 = self.right * rp.0 + self.up * rp.1;
-        Ray::new(self.eye + offset, self.lower_left + uv.0 * self.horizontal + uv.1 * self.vertical - self.eye - offset)
+        Ray::new(
+            self.eye + offset,
+            self.lower_left + uv.0 * self.horizontal + uv.1 * self.vertical - self.eye - offset,
+        )
     }
 }

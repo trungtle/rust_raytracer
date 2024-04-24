@@ -1,5 +1,15 @@
 use env_logger;
-use tracer::RustracerApp;
+
+pub mod app;
+pub mod cameras;
+pub mod core;
+pub mod integrators;
+pub mod loaders;
+pub mod materials;
+pub mod shapes;
+pub mod textures;
+
+use app::RustracerApp;
 
 fn init_ui(app: Box<RustracerApp>) -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {

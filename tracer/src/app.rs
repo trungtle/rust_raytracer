@@ -1,38 +1,31 @@
-use eframe::{egui::{self}, epaint::ColorImage};
+use eframe::{
+    egui::{self},
+    epaint::ColorImage,
+};
 
 use math::{Float, Vec2, Vec3};
 
-use std::{f64::consts::FRAC_PI_2, path::{Path, PathBuf}};
 use std::{
-    time::Instant,
-    sync::Arc
+    f64::consts::FRAC_PI_2,
+    path::{Path, PathBuf},
 };
+use std::{sync::Arc, time::Instant};
 use strum::IntoEnumIterator;
-use strum_macros::{EnumIter, Display};
+use strum_macros::{Display, EnumIter};
 
 use log::info;
 
-use crate::{core::{
-    film::Film,
-    primitive::Primitive,
-    sampler,
-    scene::Scene,
-    shape::Shape,
-    spectrum::Spectrum,
-    view::View
-}, integrators::direct_lighting::RenderSettings};
-
-use crate::shapes::{
-    mesh::Mesh,
-    sphere::Sphere
+use crate::{
+    core::{
+        film::Film, primitive::Primitive, sampler, scene::Scene, shape::Shape, spectrum::Spectrum,
+        view::View,
+    },
+    integrators::direct_lighting::RenderSettings,
 };
 
-use crate::materials::{
-    ConstantMaterial,
-    MetalMaterial,
-    LambertMaterial,
-    DieletricMaterial
-};
+use crate::shapes::{mesh::Mesh, sphere::Sphere};
+
+use crate::materials::{ConstantMaterial, DieletricMaterial, LambertMaterial, MetalMaterial};
 
 use crate::cameras::perspective::PerspectiveCamera;
 use crate::integrators::direct_lighting::DirectLightingIntegrator;
@@ -41,11 +34,9 @@ const SCREEN_WIDTH: u32 = 400;
 const SCREEN_HEIGHT: u32 = 400;
 const SAMPLES_PER_PIXEL: u8 = 1;
 
-
-fn pbrt4_scene() -> Scene
-{
-    let camera_position: Vec3 = Vec3::new(0.,5.5,-30.5);
-    let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
+fn pbrt4_scene() -> Scene {
+    let camera_position: Vec3 = Vec3::new(0., 5.5, -30.5);
+    let camera_lookat: Vec3 = Vec3::new(0., 0., -1.);
 
     // Create new camera
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
@@ -57,7 +48,6 @@ fn pbrt4_scene() -> Scene
     let pbrt_filepath = pbrt_relative_path.to_string() + pbrt_filename;
     log::info!("Loading scene: {}", &pbrt_filepath);
     let pbrt_scene = pbrt4::Scene::from_file(&pbrt_filepath).unwrap();
-
 
     println!("Global options: {:#?}", pbrt_scene.options);
 
@@ -110,9 +100,9 @@ fn pbrt4_scene() -> Scene
         ply_path.push(Path::new(pbrt_relative_path));
         let _ = match shape.params {
             pbrt4::types::Shape::PlyMesh { filename } => {
-                ply_path.push(Path::new(&filename[1..filename.len()-1]));
+                ply_path.push(Path::new(&filename[1..filename.len() - 1]));
                 let mesh = Mesh::from_ply(&ply_path);
-            },
+            }
             _ => {}
         };
     }
@@ -121,7 +111,7 @@ fn pbrt4_scene() -> Scene
 
     scene.environment_light = |ray| -> Spectrum {
         let t = 0.5 * ray.direction.y + 1.0;
-        let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.5, 0.7, 1.);
+        let sky_color = (1. - t) * Vec3::new(1., 1., 1.) + t * Vec3::new(0.5, 0.7, 1.);
         let sky_environment = Spectrum::ColorRGB(sky_color);
         return sky_environment;
     };
@@ -129,18 +119,16 @@ fn pbrt4_scene() -> Scene
     return scene;
 }
 
-
-fn gltf_scene() -> Scene
-{
-    let camera_position: Vec3 = Vec3::new(15.,2.5,0.0);
+fn gltf_scene() -> Scene {
+    let camera_position: Vec3 = Vec3::new(15., 2.5, 0.0);
     // let mut camera_position: Vec3 = Vec3::new(0.,25.5,10.);
-    let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
+    let camera_lookat: Vec3 = Vec3::new(0., 0., -1.);
 
     let mut scene = Scene::from("assets/glTF/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
 
     scene.environment_light = |ray| -> Spectrum {
         let t = 0.5 * ray.direction.y + 1.0;
-        let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.5, 0.7, 1.);
+        let sky_color = (1. - t) * Vec3::new(1., 1., 1.) + t * Vec3::new(0.5, 0.7, 1.);
         let sky_environment = Spectrum::ColorRGB(sky_color);
         return sky_environment;
     };
@@ -149,19 +137,19 @@ fn gltf_scene() -> Scene
     scene.persp_camera = cam;
 
     // Floor
-    scene.add(
-        Primitive::new(
-                Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
-                Option::Some(
-                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
+    scene.add(Primitive::new(
+        Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
+        Option::Some(Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(
+            Vec3::new(0.2, 0.2, 0.2),
+        )))),
+    ));
 
     return scene;
 }
 
-fn raytracing_weekend_scene() -> Scene
-{
-    let camera_position: Vec3 = Vec3::new(0.,0.5,-5.5);
-    let camera_lookat: Vec3 = Vec3::new(0.,0.,-1.);
+fn raytracing_weekend_scene() -> Scene {
+    let camera_position: Vec3 = Vec3::new(0., 0.5, -5.5);
+    let camera_lookat: Vec3 = Vec3::new(0., 0., -1.);
 
     // Create new camera
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
@@ -170,44 +158,47 @@ fn raytracing_weekend_scene() -> Scene
 
     scene.environment_light = |ray| -> Spectrum {
         let t = 0.5 * ray.direction.y + 1.0;
-        let sky_color = (1. - t) * Vec3::new(1.,1.,1.) + t * Vec3::new(0.2, 0.2, 1.);
+        let sky_color = (1. - t) * Vec3::new(1., 1., 1.) + t * Vec3::new(0.2, 0.2, 1.);
         let sky_environment = Spectrum::ColorRGB(sky_color);
         return sky_environment;
     };
 
-    scene.add(
-    Primitive::new(
-            Shape::Sphere(Sphere::new(Vec3::new(0., 0., -1.), 0.5)),
-            Option::Some(
-                Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.5, 0.2, 0.5)))))));
+    scene.add(Primitive::new(
+        Shape::Sphere(Sphere::new(Vec3::new(0., 0., -1.), 0.5)),
+        Option::Some(Arc::new(LambertMaterial::new(Spectrum::ColorRGB(
+            Vec3::new(0.5, 0.2, 0.5),
+        )))),
+    ));
 
-    scene.add(
-        Primitive::new(
-                Shape::Sphere(Sphere::new(Vec3::new(1., 0., -1.), 0.5)),
-                Option::Some(
-                    Arc::new(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5)))))));
+    scene.add(Primitive::new(
+        Shape::Sphere(Sphere::new(Vec3::new(1., 0., -1.), 0.5)),
+        Option::Some(Arc::new(MetalMaterial::new(Spectrum::ColorRGB(Vec3::new(
+            0.2, 0.5, 0.5,
+        ))))),
+    ));
 
-    scene.add(
-        Primitive::new(
-                Shape::Sphere(Sphere::new(Vec3::new(-1., 0., -1.), 0.5)),
-                Option::Some(
-                    Arc::new(DieletricMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.5, 0.5)))))));
+    scene.add(Primitive::new(
+        Shape::Sphere(Sphere::new(Vec3::new(-1., 0., -1.), 0.5)),
+        Option::Some(Arc::new(DieletricMaterial::new(Spectrum::ColorRGB(
+            Vec3::new(1.0, 1.0, 1.0),
+        )))),
+    ));
 
     // Ground
-    scene.add(
-        Primitive::new(
-                Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
-                Option::Some(
-                    Arc::new(LambertMaterial::new(Spectrum::ColorRGB(Vec3::new(0.2, 0.2, 0.2)))))));
+    scene.add(Primitive::new(
+        Shape::Sphere(Sphere::new(Vec3::new(0., -100.5, -1.), 100.)),
+        Option::Some(Arc::new(LambertMaterial::new(Spectrum::ColorRGB(
+            Vec3::new(0.2, 0.2, 0.2),
+        )))),
+    ));
 
     return scene;
 }
 
-fn furnace_test() -> Scene
-{
+fn furnace_test() -> Scene {
     let reveal = true;
-    let camera_position: Vec3 = Vec3::new(0.,5.,-15.5);
-    let camera_lookat: Vec3 = Vec3::new(0.,0.,10.);
+    let camera_position: Vec3 = Vec3::new(0., 5., -15.5);
+    let camera_lookat: Vec3 = Vec3::new(0., 0., 10.);
 
     // Create new camera
     let cam = PerspectiveCamera::new(SCREEN_WIDTH, SCREEN_HEIGHT, camera_position, camera_lookat);
@@ -215,27 +206,54 @@ fn furnace_test() -> Scene
     scene.persp_camera = cam;
 
     scene.environment_light = |_ray| -> Spectrum {
-        Spectrum::ColorRGB(Vec3 { x: 0.5, y: 0.5, z: 0.5 })
+        Spectrum::ColorRGB(Vec3 {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
+        })
     };
 
-    scene.add(
-        Primitive::new(
-            Shape::Sphere(Sphere::new(Vec3::zero(), 2.)),
-            Option::Some(
-                Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3 {x: 1.0, y: 1.0, z: 1.0}))))));
+    scene.add(Primitive::new(
+        Shape::Sphere(Sphere::new(Vec3::zero(), 2.)),
+        Option::Some(Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3 {
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        })))),
+    ));
 
     if reveal {
-        scene.add(
-            Primitive::new(
-                Shape::Sphere(Sphere::new(Vec3 {x: 3., y: 0., z: -0.5}, 1.)),
-                Option::Some(
-                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3 {x:0.8, y:0.0, z:0.0}))))));
+        scene.add(Primitive::new(
+            Shape::Sphere(Sphere::new(
+                Vec3 {
+                    x: 3.,
+                    y: 0.,
+                    z: -0.5,
+                },
+                1.,
+            )),
+            Option::Some(Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3 {
+                x: 0.8,
+                y: 0.0,
+                z: 0.0,
+            })))),
+        ));
 
-        scene.add(
-            Primitive::new(
-                Shape::Sphere(Sphere::new(Vec3 {x: 0., y: 3., z: -0.5}, 1.)),
-                Option::Some(
-                    Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3{x:0.8, y:0.1, z:0.02}))))));
+        scene.add(Primitive::new(
+            Shape::Sphere(Sphere::new(
+                Vec3 {
+                    x: 0.,
+                    y: 3.,
+                    z: -0.5,
+                },
+                1.,
+            )),
+            Option::Some(Arc::new(ConstantMaterial::new(Spectrum::ColorRGB(Vec3 {
+                x: 0.8,
+                y: 0.1,
+                z: 0.02,
+            })))),
+        ));
     }
 
     return scene;
@@ -289,13 +307,12 @@ impl TestSampler {
     }
 }
 
-
 #[derive(Debug, EnumIter, PartialEq, Clone, Copy, Display)]
 enum SceneOption {
     Spheres,
     Truck,
     FurnaceTest,
-    Pbrt4
+    Pbrt4,
 }
 
 pub struct RustracerApp {
@@ -317,7 +334,7 @@ pub struct RustracerApp {
     scene_option: SceneOption,
     view: View,
     scene: Scene,
-    render_settings: RenderSettings
+    render_settings: RenderSettings,
 }
 
 impl Default for RustracerApp {
@@ -340,12 +357,16 @@ impl Default for RustracerApp {
             scene_option: SceneOption::Spheres,
             view: View::new(SCREEN_WIDTH, SCREEN_HEIGHT, SAMPLES_PER_PIXEL),
             scene: raytracing_weekend_scene(),
-            render_settings: RenderSettings { single_thread: false }
+            render_settings: RenderSettings {
+                single_thread: false,
+            },
         }
     }
 }
 
-fn load_image_from_path(path: &std::path::Path) -> Result<eframe::egui::ColorImage, image::ImageError> {
+fn load_image_from_path(
+    path: &std::path::Path,
+) -> Result<eframe::egui::ColorImage, image::ImageError> {
     let image = image::io::Reader::open(path)?.decode()?;
     let size = [image.width() as _, image.height() as _];
     let image_buffer = image.to_rgba8();
@@ -364,7 +385,6 @@ fn load_image_from_path(path: &std::path::Path) -> Result<eframe::egui::ColorIma
 /// The function returns an instance of the RustracerApp struct.
 impl eframe::App for RustracerApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-
         egui::SidePanel::left("file").show(ctx, |ui| {
             if ui.button("Open file…").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
@@ -377,11 +397,14 @@ impl eframe::App for RustracerApp {
                     ui.label("Opened file:");
                     ui.monospace(picked_path);
                 });
-                self.image_browswer = Some(Arc::new(load_image_from_path(std::path::Path::new(&picked_path)).unwrap()));
+                self.image_browswer = Some(Arc::new(
+                    load_image_from_path(std::path::Path::new(&picked_path)).unwrap(),
+                ));
             }
 
             if let Some(image) = self.image_browswer.take() {
-                self.texture_browser = Some(ctx.load_texture("image_browser", image, Default::default()));
+                self.texture_browser =
+                    Some(ctx.load_texture("image_browser", image, Default::default()));
             }
 
             if let Some(texture) = self.texture_browser.as_ref() {
@@ -397,7 +420,9 @@ impl eframe::App for RustracerApp {
                 film.set_pixels(pixels);
                 let path = film.write_image();
                 log::info!("Image written to: {:?}", film.file_name);
-                self.image_test = Some(Arc::new(load_image_from_path(std::path::Path::new(&path)).unwrap()));
+                self.image_test = Some(Arc::new(
+                    load_image_from_path(std::path::Path::new(&path)).unwrap(),
+                ));
             }
 
             if let Some(image_test) = self.image_test.take() {
@@ -407,7 +432,7 @@ impl eframe::App for RustracerApp {
             if let Some(texture_test) = self.texture_test.as_ref() {
                 ui.image((texture_test.id(), texture_test.size_vec2()));
             }
-         });
+        });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(self.name.clone());
@@ -418,11 +443,15 @@ impl eframe::App for RustracerApp {
                     for option in SceneOption::iter() {
                         ui.selectable_value(&mut self.scene_option, option, option.to_string());
                     }
-                }
-            );
+                });
 
-            ui.add(egui::Slider::new(&mut self.sample_per_pixel, 1..=100).text("Samples per pixels"));
-            ui.add(egui::Checkbox::new(&mut self.render_settings.single_thread, "Single thread"));
+            ui.add(
+                egui::Slider::new(&mut self.sample_per_pixel, 1..=100).text("Samples per pixels"),
+            );
+            ui.add(egui::Checkbox::new(
+                &mut self.render_settings.single_thread,
+                "Single thread",
+            ));
 
             if ui.add(egui::Button::new("Render")).clicked() {
                 self.view = View::new(self.width, self.height, self.sample_per_pixel);
@@ -430,7 +459,7 @@ impl eframe::App for RustracerApp {
                     SceneOption::Spheres => raytracing_weekend_scene(),
                     SceneOption::Truck => gltf_scene(),
                     SceneOption::FurnaceTest => furnace_test(),
-                    SceneOption::Pbrt4 => pbrt4_scene()
+                    SceneOption::Pbrt4 => pbrt4_scene(),
                 };
 
                 let pixels = render(self.view, self.scene.clone(), self.render_settings.clone());
@@ -439,7 +468,9 @@ impl eframe::App for RustracerApp {
                 film.set_pixels(pixels);
                 let path = film.write_image();
                 log::info!("Image written to: {:?}", path);
-                self.image = Some(Arc::new(load_image_from_path(std::path::Path::new(&path)).unwrap()));
+                self.image = Some(Arc::new(
+                    load_image_from_path(std::path::Path::new(&path)).unwrap(),
+                ));
             }
 
             if let Some(image) = self.image.take() {

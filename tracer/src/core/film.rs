@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc};
+use image::{ImageBuffer, RgbImage};
+use math::Vec3;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-use math::Vec3;
-use image::{ImageBuffer, RgbImage};
 
 use crate::core::spectrum::Spectrum;
 
@@ -21,7 +21,7 @@ impl Default for Film {
             width: 100,
             height: 100,
             file_name: "Image".to_owned(),
-            pixels: vec![Spectrum::ColorRGB(Vec3::from(0.)); 100 as usize * 100 as usize]
+            pixels: vec![Spectrum::ColorRGB(Vec3::from(0.)); 100 as usize * 100 as usize],
         }
     }
 }
@@ -33,11 +33,11 @@ impl Film {
             width,
             height,
             file_name: String::from(file_name),
-            pixels: vec![Spectrum::ColorRGB(Vec3::from(0.)); width as usize * height as usize]
+            pixels: vec![Spectrum::ColorRGB(Vec3::from(0.)); width as usize * height as usize],
         }
     }
 
-    pub fn set_pixel(&mut self, x:u32, y:u32, color: Spectrum) {
+    pub fn set_pixel(&mut self, x: u32, y: u32, color: Spectrum) {
         let index = (x + self.width * y) as usize;
         self.pixels[index] = color;
     }
@@ -49,7 +49,11 @@ impl Film {
     pub fn write_image(&self) -> String {
         let now: DateTime<Utc> = Utc::now();
         log::info!("UTC now is: {}", now);
-        let path_ppm_string = format!("output/{}-{}.ppm", self.file_name,now.format("%v-%H-%M-%S"));
+        let path_ppm_string = format!(
+            "output/{}-{}.ppm",
+            self.file_name,
+            now.format("%v-%H-%M-%S")
+        );
         let path_ppm = Path::new(&path_ppm_string);
 
         let mut img_png: RgbImage = ImageBuffer::new(self.width, self.height);
@@ -59,13 +63,13 @@ impl Film {
         };
 
         let mut image: String = format!("P3\n{} {}\n255\n", self.width, self.height);
-        for y in (0..=self.height-1).rev() {
+        for y in (0..=self.height - 1).rev() {
             for x in 0..self.width {
                 let index = (x + self.width * y) as usize;
                 let Spectrum::ColorRGB(color) = &self.pixels[index];
-                let ir = (255.99*color.r()) as u8;
-                let ig = (255.99*color.g()) as u8;
-                let ib = (255.99*color.b()) as u8;
+                let ir = (255.99 * color.r()) as u8;
+                let ig = (255.99 * color.g()) as u8;
+                let ib = (255.99 * color.b()) as u8;
 
                 // TODO: Create an option to write either to ppm or png, but not both
                 image.push_str(&format!("{} {} {}\n", ir, ig, ib));
@@ -79,7 +83,11 @@ impl Film {
         };
 
         // Write to png
-        let path_png_string = format!("output/{}-{}.png", self.file_name,now.format("%v-%H-%M-%S"));
+        let path_png_string = format!(
+            "output/{}-{}.png",
+            self.file_name,
+            now.format("%v-%H-%M-%S")
+        );
         let path_png = Path::new(&path_png_string);
         match img_png.save(path_png) {
             Ok(_) => log::info!("successfully wrote image to {}", path_png.display()),
@@ -89,4 +97,3 @@ impl Film {
         return path_png_string;
     }
 }
-

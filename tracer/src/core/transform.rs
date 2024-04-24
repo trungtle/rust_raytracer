@@ -42,13 +42,16 @@ impl From<&gltf::scene::Transform> for Transform {
     fn from(gltf_xform: &gltf::scene::Transform) -> Self {
         let mut matrix = Transform::default();
         match gltf_xform {
-            gltf::scene::Transform::Matrix { matrix } => {},
-            gltf::scene::Transform::Decomposed { translation, rotation, scale } => {
-                matrix = 
-                Transform::translate(Vec3::from(translation)) * 
-                Transform::from(&Quaternion::from(rotation)) * 
-                Transform::scale(Vec3::from(scale));
-            },
+            gltf::scene::Transform::Matrix { matrix } => {}
+            gltf::scene::Transform::Decomposed {
+                translation,
+                rotation,
+                scale,
+            } => {
+                matrix = Transform::translate(Vec3::from(translation))
+                    * Transform::from(&Quaternion::from(rotation))
+                    * Transform::scale(Vec3::from(scale));
+            }
         }
 
         // TODO: Apply inverse
@@ -59,18 +62,15 @@ impl From<&gltf::scene::Transform> for Transform {
 impl Transform {
     pub fn new(position: Vec3, rotation: Vec3, scale: Vec3) -> Self {
         let mut out_transform = Transform::default();
-        out_transform =
-            Transform::translate(position) *
-            Transform::rotate_x(rotation.x) *
-            Transform::rotate_x(rotation.y) *
-            Transform::rotate_x(rotation.z) *
-            Transform::scale(scale);
+        out_transform = Transform::translate(position)
+            * Transform::rotate_x(rotation.x)
+            * Transform::rotate_x(rotation.y)
+            * Transform::rotate_x(rotation.z)
+            * Transform::scale(scale);
 
         // TODO: Apply inverse
         return out_transform;
     }
-
- 
 
     pub fn from_array(array: [[Float; 4]; 4]) -> Self {
         Self {
@@ -82,17 +82,17 @@ impl Transform {
 
     pub fn get_position(&self) -> Vec3 {
         Vec3 {
-            x: self.matrix[[0,3]], 
-            y: self.matrix[[1,3]], 
-            z: self.matrix[[2,3]]
+            x: self.matrix[[0, 3]],
+            y: self.matrix[[1, 3]],
+            z: self.matrix[[2, 3]],
         }
     }
 
     pub fn get_scale(&self) -> Vec3 {
         Vec3 {
-            x: self.matrix[[0,0]], 
-            y: self.matrix[[1,1]], 
-            z: self.matrix[[2,2]]
+            x: self.matrix[[0, 0]],
+            y: self.matrix[[1, 1]],
+            z: self.matrix[[2, 2]],
         }
     }
 
@@ -113,11 +113,12 @@ impl Transform {
     pub fn rotate_x(theta_radian: Float) -> Self {
         let sintheta = theta_radian.sin();
         let costheta = theta_radian.cos();
-        let out_transform = Transform::from_array(
-            [[1., 0., 0., 0.],
+        let out_transform = Transform::from_array([
+            [1., 0., 0., 0.],
             [0., costheta, -sintheta, 0.],
             [0., sintheta, costheta, 0.],
-            [0., 0., 0., 1.]]);
+            [0., 0., 0., 1.],
+        ]);
 
         // TODO: Apply inverse
         return out_transform;
@@ -126,11 +127,12 @@ impl Transform {
     pub fn rotate_y(theta_radian: Float) -> Self {
         let sintheta = theta_radian.sin();
         let costheta = theta_radian.cos();
-        let out_transform = Transform::from_array(
-            [[costheta, 0., sintheta, 0.],
+        let out_transform = Transform::from_array([
+            [costheta, 0., sintheta, 0.],
             [0., 1., 0., 0.],
             [-sintheta, 0., costheta, 0.],
-            [0., 0., 0., 1.]]);
+            [0., 0., 0., 1.],
+        ]);
 
         // TODO: Apply inverse
         return out_transform;
@@ -139,11 +141,12 @@ impl Transform {
     pub fn rotate_z(theta_radian: Float) -> Self {
         let sintheta = theta_radian.sin();
         let costheta = theta_radian.cos();
-        let out_transform = Transform::from_array(
-            [[costheta, -sintheta, 0., 0.],
+        let out_transform = Transform::from_array([
+            [costheta, -sintheta, 0., 0.],
             [sintheta, costheta, 0., 0.],
             [0., 0., 1., 0.],
-            [0., 0., 0., 1.]]);
+            [0., 0., 0., 1.],
+        ]);
 
         // TODO: Apply inverse
         return out_transform;
@@ -179,6 +182,11 @@ impl ops::Mul<Transform> for Transform {
 // -----------------------------------------------------------------------------
 impl std::fmt::Display for Transform {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Position: {}, Scale: {}", self.get_position(), self.get_scale())
+        write!(
+            f,
+            "Position: {}, Scale: {}",
+            self.get_position(),
+            self.get_scale()
+        )
     }
 }

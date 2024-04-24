@@ -5,12 +5,12 @@ use std::sync::Arc;
 use math::{Float, Quaternion, Vec3, Vector3};
 
 use crate::cameras::perspective::PerspectiveCamera;
-use crate::core::primitive::Primitive;
 use crate::core::interaction::SurfaceInteraction;
+use crate::core::primitive::Primitive;
 use crate::core::ray::Ray;
+use crate::core::shape::Shape;
 use crate::core::spectrum::Spectrum;
 use crate::core::transform::Transform;
-use crate::core::shape::Shape;
 use crate::loaders::gltf_loader::GData;
 use crate::materials::LambertMaterial;
 use crate::shapes::mesh::Mesh;
@@ -32,16 +32,22 @@ impl Default for Scene {
         Self {
             primitives: Vec::default(),
             environment_light: |_| Spectrum::ColorRGB(Vec3::from(0.)),
-            persp_camera: PerspectiveCamera::default()
+            persp_camera: PerspectiveCamera::default(),
         }
     }
 }
 
 impl Scene {
     fn parse_gltf<P>(path: P) -> Self
-        where P: AsRef<Path> {
+    where
+        P: AsRef<Path>,
+    {
         let (doc, buffers, images) = gltf::import(path).unwrap();
-        let data = GData { doc , buffers, images };
+        let data = GData {
+            doc,
+            buffers,
+            images,
+        };
 
         let mut scene = Scene::default();
 
@@ -50,21 +56,27 @@ impl Scene {
             let rotate_180_z = Transform::rotate_z(std::f32::consts::PI);
             let shift_x = Transform::translate(Vec3::new(0.0, -0.5, 0.));
 
-            Scene::parse_gltf_node(&mut scene, &data, &s.nodes().next().unwrap(), shift_x * rotate_180_z);
+            Scene::parse_gltf_node(
+                &mut scene,
+                &data,
+                &s.nodes().next().unwrap(),
+                shift_x * rotate_180_z,
+            );
         }
 
-        for node in data.doc.nodes() {
+        for node in data.doc.nodes() {}
 
-        }
-
-        for image in data.images {
-
-        }
+        for image in data.images {}
 
         return scene;
     }
 
-    fn parse_gltf_node(scene: &mut Scene, data: &GData, node: &gltf::Node, parent_xform: Transform) {
+    fn parse_gltf_node(
+        scene: &mut Scene,
+        data: &GData,
+        node: &gltf::Node,
+        parent_xform: Transform,
+    ) {
         let xform = parent_xform * Transform::from(&node.transform());
 
         info!("Node: {:?} - Transform: {}", node.name(), xform);
@@ -73,7 +85,7 @@ impl Scene {
             info!("-- Node has mesh {:?}", mesh.name());
             Scene::parse_gltf_mesh(scene, data, &mesh, xform);
         } else if let Some(_) = node.camera() {
-                scene.persp_camera.set_position(&xform.get_position());
+            scene.persp_camera.set_position(&xform.get_position());
         } else {
             info!("-- Node has no mesh");
         }
@@ -94,9 +106,10 @@ impl Scene {
         for primitive in mesh.primitives() {
             let mesh = Mesh::from_gltf(&primitive, &data);
             let color = Spectrum::ColorRGB(Vec3::from(1.0));
-            let mut primitive = Primitive::new(Shape::Mesh(mesh),
-                Option::Some(
-                    Arc::new(LambertMaterial::new(color))));
+            let mut primitive = Primitive::new(
+                Shape::Mesh(mesh),
+                Option::Some(Arc::new(LambertMaterial::new(color))),
+            );
             primitive.apply_transform(xform);
             scene.add(primitive);
         }
@@ -104,7 +117,9 @@ impl Scene {
 }
 
 impl<P> From<P> for Scene
-    where P: AsRef<Path> {
+where
+    P: AsRef<Path>,
+{
     fn from(path: P) -> Self {
         if let Some(extension) = path.as_ref().extension() {
             if extension == "gltf" || extension == "glb" {
@@ -127,7 +142,7 @@ impl Scene {
         for primitive in self.primitives.iter() {
             let mut isect = SurfaceInteraction::new();
             let hit = primitive.intersect(&ray, &mut isect);
-            if hit && isect.t < closest_t{
+            if hit && isect.t < closest_t {
                 closest_t = isect.t;
                 closest_isect.hit_normal = isect.hit_normal;
                 closest_isect.hit_point = isect.hit_point;

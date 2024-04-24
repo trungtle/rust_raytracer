@@ -8,7 +8,7 @@ pub struct SurfaceInteraction {
     pub hit_normal: Vec3,
     pub hit_uv: Vec2,
     pub hit_primitive: Option<Primitive>,
-    pub hit_front_face: bool
+    pub hit_front_face: bool,
 }
 
 impl SurfaceInteraction {
@@ -19,7 +19,7 @@ impl SurfaceInteraction {
             hit_normal: Vec3::from(0.),
             hit_uv: Vec2::from(0.),
             hit_primitive: Option::None,
-            hit_front_face: true
+            hit_front_face: true,
         }
     }
 }
