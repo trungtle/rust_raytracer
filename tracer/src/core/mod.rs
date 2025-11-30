@@ -1,4 +1,5 @@
 pub mod film;
+pub mod bounds;
 pub mod geometry;
 pub mod interaction;
 pub mod primitive;

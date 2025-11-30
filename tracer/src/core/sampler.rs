@@ -1,43 +1,35 @@
 use math::{Float, Vec2, Vec3};
 use rand::prelude::*;
 
-pub struct Sampler {
-    pub rng_generator: ThreadRng,
-}
-
-impl Default for Sampler {
-    fn default() -> Self {
-        Self {
-            rng_generator: rand::thread_rng(),
-        }
-    }
-}
+pub struct Sampler {}
 
 impl Sampler {
-    pub fn random_0_1(&mut self) -> Float {
-        self.rng_generator
+    pub fn random_0_1() -> Float {
+        let mut rng_generator = rand::thread_rng();
+        rng_generator
             .sample(rand::distributions::Uniform::new(0., 1.))
     }
 
-    pub fn random_vec2_0_1(&mut self) -> Vec2 {
-        let ru = self.rng_generator.gen_range(0.0..1.0);
-        let rv = self.rng_generator.gen_range(0.0..1.0);
+    pub fn random_vec2_0_1() -> Vec2 {
+        let mut rng_generator = rand::thread_rng();
+        let ru = rng_generator.gen_range(0.0..1.0);
+        let rv = rng_generator.gen_range(0.0..1.0);
         return Vec2 { 0: ru, 1: rv };
     }
 
-    pub fn sample_from_pixel(&mut self, point: Vec2, width: u32, height: u32) -> Vec2 {
-        let ru = self.random_0_1();
-        let rv = self.random_0_1();
+    pub fn sample_from_pixel(point: Vec2, width: u32, height: u32) -> Vec2 {
+        let ru = Sampler::random_0_1();
+        let rv = Sampler::random_0_1();
         let u = (point.0 + ru) / width as Float;
         let v = (point.1 + rv) / height as Float;
         Vec2 { 0: u, 1: v }
     }
 
-    pub fn sample_unit_disk(&mut self) -> Vec2 {
+    pub fn sample_unit_disk() -> Vec2 {
         let mut point: Vec2 =
             2. * Vec2 {
-                0: self.random_0_1(),
-                1: self.random_0_1(),
+                0: Sampler::random_0_1(),
+                1: Sampler::random_0_1(),
             } - Vec2::from(1.);
         loop {
             // dot product with itself is squared length
@@ -46,8 +38,8 @@ impl Sampler {
             }
             point =
                 2. * Vec2 {
-                    0: self.random_0_1(),
-                    1: self.random_0_1(),
+                    0: Sampler::random_0_1(),
+                    1: Sampler::random_0_1(),
                 } - Vec2::from(1.);
         }
         point
@@ -75,11 +67,11 @@ impl Sampler {
         };
     }
 
-    pub fn sample_from_unit_sphere(&mut self) -> Vec3 {
+    pub fn sample_from_unit_sphere() -> Vec3 {
         let mut point = Vec3 {
-            x: self.random_0_1(),
-            y: self.random_0_1(),
-            z: self.random_0_1(),
+            x: Sampler::random_0_1(),
+            y: Sampler::random_0_1(),
+            z: Sampler::random_0_1(),
         };
         loop {
             if Vec3::length2(&point) < 1. {
@@ -87,9 +79,9 @@ impl Sampler {
             }
             point =
                 2. * Vec3 {
-                    x: self.random_0_1(),
-                    y: self.random_0_1(),
-                    z: self.random_0_1(),
+                    x: Sampler::random_0_1(),
+                    y: Sampler::random_0_1(),
+                    z: Sampler::random_0_1(),
                 } - Vec3::from(1.); // Scale to -1 , 1 range
         }
 
@@ -99,7 +91,7 @@ impl Sampler {
     // Find a random direction, cosine weighted, with z axis as normal
     // If we sample the variables with cosine weighted, then we can use
     // our pdf as cos(theta) / pi
-    pub fn sample_cosine_direction(&mut self) -> Vec3 {
+    pub fn sample_cosine_direction() -> Vec3 {
         // Sampling with 2 variables over a cosine weighted direction
         // r1 = Integral_0_phi(1 /(2 * PI)) -> phi = 2 * PI * r1
         // r2 = Integral_0_theta(2 * PI * f(t) * sin(t)) with f(t) = cos(theta) / PI
@@ -116,7 +108,7 @@ impl Sampler {
         // Vec3::new(x, y, z)
 
         // Malley's method: sample from concentric disk, then project upward
-        let random = self.random_vec2_0_1();
+        let random = Sampler::random_vec2_0_1();
         let r = Sampler::sample_unit_disk_concentric(random);
         let z = Float::max(0.0, 1.0 - r.x() * r.x() - r.y() * r.y());
         return Vec3 {

@@ -6,6 +6,12 @@ use crate::core::shape::Shape;
 use crate::core::Transform;
 use crate::materials::Material;
 
+trait Prim {
+    fn intersect(&self, ray: &Ray, isect: &mut SurfaceInteraction) -> bool;
+    fn bounds(&self) -> crate::core::bounds::Bounds3f;
+}
+
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct Primitive {
     pub shape: Shape,
@@ -40,5 +46,9 @@ impl Primitive {
 
     pub fn intersect(&self, ray: &Ray, isect: &mut SurfaceInteraction) -> bool {
         self.shape.intersect(ray, isect)
+    }
+
+    pub fn bounds(&self) -> crate::core::bounds::Bounds3f {
+        self.shape.world_bound()
     }
 }

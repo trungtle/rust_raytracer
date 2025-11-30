@@ -1,12 +1,9 @@
-use std::primitive;
-
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::ray::Ray;
 use crate::loaders::gltf_loader::GData;
 use crate::shapes::triangle::Triangle;
 use gltf;
 use image::io::Reader as ImageReader;
-use image::GenericImageView;
 use log::info;
 use math::{Float, Vec2, Vec3};
 
@@ -183,5 +180,17 @@ impl Mesh {
         isect.hit_normal = nearest_isect.hit_normal;
         isect.hit_uv = nearest_isect.hit_uv;
         return hit;
+    }
+
+    pub fn world_bound(&self) -> crate::core::bounds::Bounds3f {
+        let mut p_min = Vec3::new(Float::MAX, Float::MAX, Float::MAX);
+        let mut p_max = Vec3::new(Float::MIN, Float::MIN, Float::MIN);
+
+        for position in &self.positions {
+            p_min = Vec3::component_min(p_min, *position);
+            p_max = Vec3::component_max(p_max, *position);
+        }
+
+        crate::core::bounds::Bounds3f { p_min, p_max }
     }
 }

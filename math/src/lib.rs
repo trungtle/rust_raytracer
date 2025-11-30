@@ -15,14 +15,3 @@ pub type Mat4 = Matrix4<Float>;
 pub type Vec3 = Vector3<Float>;
 pub type Vec2 = Vector2<Float>;
 pub type Float = f32;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}

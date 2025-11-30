@@ -62,6 +62,7 @@ impl<T> Vector3<T>
     pub fn r(&self) -> T { self.x }
     pub fn g(&self) -> T { self.y }
     pub fn b(&self) -> T { self.z }
+
 }
 
 impl<T> Vector3<T>
@@ -72,16 +73,37 @@ impl<T> Vector3<T>
         }
     }
 
-    pub fn min3(&self) -> T {
-        self.x.min(self.y.min(self.z))
-    }
-
     pub fn sqrt(v: Vector3<T>) -> Vector3<T> {
         Vector3 {
             x: T::sqrt(v.x),
             y: T::sqrt(v.y),
             z: T::sqrt(v.z)
         }
+    }
+    // Return a new vector with the minimum per component
+    pub fn component_min(v1: Vector3<T>, v2: Vector3<T>) -> Vector3<T> {
+        Vector3 {
+            x: v1.x.min(v2.x),
+            y: v1.y.min(v2.y),
+            z: v1.z.min(v2.z)
+        }
+    }
+
+    // Return a new vector with the maximum per component
+    pub fn component_max(v1: Vector3<T>, v2: Vector3<T>) -> Vector3<T> {
+        Vector3 {
+            x: v1.x.max(v2.x),
+            y: v1.y.max(v2.y),
+            z: v1.z.max(v2.z)
+        }
+    }
+
+    pub fn min3(&self) -> T {
+        self.x.min(self.y.min(self.z))
+    }
+
+    pub fn max3(&self) -> T {
+        self.x.max(self.y.max(self.z))
     }
 
     pub fn length(&self) -> T {
@@ -138,6 +160,7 @@ impl Vector3<Float> {
         let r_out_parallel = -(1.0 - r_out_perp.length2()).abs().sqrt() * n;
         return r_out_perp + r_out_parallel;
     }
+
 }
 
 
@@ -388,6 +411,7 @@ impl<T> Vector2<T>
         v1.x() * v2.x() + v1.y() * v2.y()
     }
 }
+
 
 // ----------------------------------------------------------------------------
 // Conversion from other types

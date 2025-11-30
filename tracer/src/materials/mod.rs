@@ -4,6 +4,7 @@ pub mod pdf;
 use core::fmt::Debug;
 use math::Float;
 use math::Vec3;
+use math::Vector3;
 
 use crate::materials::{pdf::Pdf, pdf::UniformPdf};
 
@@ -11,15 +12,31 @@ use crate::core::{
     interaction::SurfaceInteraction, ray::Ray, sampler::Sampler, spectrum::Spectrum,
 };
 
+pub struct MaterialScatterResult
+{
+    pub ray: Ray,
+    pub attenuation: Spectrum,
+    pub success: bool
+}
+
+impl Default for MaterialScatterResult {
+    fn default() -> Self {
+        Self {
+            ray: Ray::default(),
+            attenuation: Spectrum::ColorRGB(Vector3::new(0.0, 0.0, 0.0)),
+            success: true
+        }
+    }
+}
+
 pub trait Material: Send + Sync {
     fn value(&self) -> Spectrum;
     fn scatter(
         &self,
-        ray: &mut Ray,
-        attenuation: &mut Spectrum,
+        ray: &Ray,
+        attenuation: &Spectrum,
         interaction: &SurfaceInteraction,
-        sampler: &mut Sampler,
-    ) -> bool;
+    ) -> MaterialScatterResult;
 }
 
 impl Debug for dyn Material {
@@ -51,15 +68,17 @@ impl Material for ConstantMaterial {
     }
     fn scatter(
         &self,
-        ray: &mut Ray,
-        attenuation: &mut Spectrum,
+        ray: &Ray,
+        _attenuation: &Spectrum,
         interaction: &SurfaceInteraction,
-        sampler: &mut Sampler,
-    ) -> bool {
+    ) -> MaterialScatterResult {
+        let mut result = MaterialScatterResult::default();
         let uniform_pdf = UniformPdf::new(&interaction.hit_normal);
-        ray.direction = uniform_pdf.sample_wi(sampler);
-        *attenuation = self.color;
-        return true;
+        result.ray.origin = ray.origin;
+        result.ray.direction = uniform_pdf.sample_wi();
+        result.attenuation = self.color;
+        result.success = true;
+        return result;
     }
 }
 
@@ -81,15 +100,16 @@ impl Material for MetalMaterial {
 
     fn scatter(
         &self,
-        ray: &mut Ray,
-        attenuation: &mut Spectrum,
-        interaction: &SurfaceInteraction,
-        sampler: &mut Sampler,
-    ) -> bool {
-        ray.origin = interaction.hit_point.clone();
-        ray.direction = Vec3::reflect(ray.direction, interaction.hit_normal.clone());
-        *attenuation = self.color;
-        return true;
+        ray: &Ray,
+        _attenuation: &Spectrum,
+        interaction: &SurfaceInteraction
+    ) -> MaterialScatterResult {
+        let mut result = MaterialScatterResult::default();
+        result.ray.origin = interaction.hit_point.clone();
+        result.ray.direction = Vec3::reflect(ray.direction, interaction.hit_normal.clone());
+        result.attenuation = self.color;
+        result.success = true;
+        return result;
     }
 }
 
@@ -115,15 +135,17 @@ impl Material for LambertMaterial {
 
     fn scatter(
         &self,
-        ray: &mut Ray,
-        attenuation: &mut Spectrum,
-        interaction: &SurfaceInteraction,
-        sampler: &mut Sampler,
-    ) -> bool {
+        ray: &Ray,
+        _attenuation: &Spectrum,
+        interaction: &SurfaceInteraction
+    ) -> MaterialScatterResult {
+        let mut result = MaterialScatterResult::default();
         let uniform_pdf = UniformPdf::new(&interaction.hit_normal);
-        ray.direction = uniform_pdf.sample_wi(sampler);
-        *attenuation = self.color;
-        return true;
+        result.ray.origin = ray.origin;
+        result.ray.direction = uniform_pdf.sample_wi();
+        result.attenuation = self.color;
+        result.success = true;
+        return result;
     }
 }
 
@@ -151,12 +173,12 @@ impl Material for DieletricMaterial {
 
     fn scatter(
         &self,
-        ray: &mut Ray,
-        attenuation: &mut Spectrum,
-        interaction: &SurfaceInteraction,
-        sampler: &mut Sampler,
-    ) -> bool {
-        ray.origin = interaction.hit_point.clone() + sampler.sample_from_unit_sphere() * 0.1;
+        ray: &Ray,
+        attenuation: &Spectrum,
+        interaction: &SurfaceInteraction
+    ) -> MaterialScatterResult {
+        let mut result = MaterialScatterResult::default();
+        result.ray.origin = interaction.hit_point.clone() + Sampler::sample_from_unit_sphere() * 0.1;
 
         let ir = 1.5;
         let refraction_ratio = if interaction.hit_front_face {
@@ -169,10 +191,11 @@ impl Material for DieletricMaterial {
         } else {
             -interaction.hit_normal.clone()
         };
-        //ray.direction = Vec3::refract(ray.direction, normal, refraction_ratio);
-        ray.direction = ray.direction + sampler.sample_from_unit_sphere() * 0.1;
-        ray.direction = ray.direction.normalize();
-        *attenuation = Spectrum::ColorRGB(Vec3::from(1.0)) * *attenuation;
-        return true;
+        // result.ray.direction = Vec3::refract(ray.direction, normal, refraction_ratio);
+        result.ray.direction = ray.direction + Sampler::sample_from_unit_sphere() * 0.1;
+        result.ray.direction = result.ray.direction.normalize();
+        //result.attenuation = Spectrum::ColorRGB(Vec3::from(1.0)) * *attenuation;
+        result.success = true;
+        return result;
     }
 }

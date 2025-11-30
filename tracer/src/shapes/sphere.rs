@@ -72,4 +72,10 @@ impl Sphere {
         }
         return false;
     }
+
+    pub fn world_bound(&self) -> crate::core::bounds::Bounds3f {
+        let p_min = self.center - Vec3::new(self.radius, self.radius, self.radius);
+        let p_max = self.center + Vec3::new(self.radius, self.radius, self.radius);
+        crate::core::bounds::Bounds3f { p_min, p_max }
+    }
 }

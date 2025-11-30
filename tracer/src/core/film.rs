@@ -42,8 +42,8 @@ impl Film {
         self.pixels[index] = color;
     }
 
-    pub fn set_pixels(&mut self, pixels: Vec<Spectrum>) {
-        self.pixels = pixels;
+    pub fn set_pixels(&mut self, pixels: &Vec<Spectrum>) {
+        self.pixels = pixels.to_vec();
     }
 
     pub fn write_image(&self) -> String {

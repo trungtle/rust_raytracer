@@ -44,4 +44,10 @@ impl Triangle {
         isect.hit_uv = Vec2 { 0: u, 1: v };
         return true;
     }
+
+    pub fn world_bound(&self) -> crate::core::bounds::Bounds3f {
+        let p_min = Vec3::component_min(self.v0, Vec3::component_min(self.v1, self.v2));
+        let p_max = Vec3::component_max(self.v0, Vec3::component_max(self.v1, self.v2));
+        crate::core::bounds::Bounds3f { p_min, p_max }
+    }
 }

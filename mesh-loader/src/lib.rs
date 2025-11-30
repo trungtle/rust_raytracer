@@ -1,9 +1,9 @@
 use std::fmt::Error;
-use std::{fs::File, default};
+use std::{fs::File};
 use std::io;
 use std::io::BufRead;
 use std::path::Path;
-use ply_rs::{parser, ply::{self, KeyMap, Property}};
+use ply_rs::{parser, ply::{self}};
 
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>

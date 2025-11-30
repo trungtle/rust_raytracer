@@ -39,4 +39,12 @@ impl Shape {
             Shape::Triangle(shape) => shape.intersect(ray, isect),
         }
     }
+
+    pub fn world_bound(&self) -> crate::core::bounds::Bounds3f {
+        match self {
+            Shape::Mesh(shape) => shape.world_bound(),
+            Shape::Sphere(shape) => shape.world_bound(),
+            Shape::Triangle(shape) => shape.world_bound(),
+        }
+    }
 }

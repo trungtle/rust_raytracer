@@ -26,6 +26,18 @@ impl Spectrum {
             },
         }
     }
+
+    pub fn to_rgb(&self) -> Vec3 {
+        match self {
+            Spectrum::ColorRGB(spectrum) => *spectrum,
+        }
+    }
+
+    pub fn to_float_array(&self) -> [Float; 3] {
+        match self {
+            Spectrum::ColorRGB(spectrum) => [spectrum.x, spectrum.y, spectrum.z],
+        }
+    }
 }
 
 impl ops::Add<Vec3> for Spectrum {

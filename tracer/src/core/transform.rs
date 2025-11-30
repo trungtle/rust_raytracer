@@ -1,7 +1,6 @@
 use std::ops;
 
-use funty::Numeric;
-use math::{Float, Mat4, Matrix4, Quaternion, Vec3};
+use math::{Float, Mat4, Quaternion, Vec3};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Transform {

@@ -1,8 +1,7 @@
-use std::borrow::BorrowMut;
 use std::path::Path;
 use std::sync::Arc;
 
-use math::{Float, Quaternion, Vec3, Vector3};
+use math::{Float, Vec3};
 
 use crate::cameras::perspective::PerspectiveCamera;
 use crate::core::interaction::SurfaceInteraction;
@@ -16,9 +15,6 @@ use crate::materials::LambertMaterial;
 use crate::shapes::mesh::Mesh;
 
 use log::info;
-
-use super::sampler::Sampler;
-use super::transform;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Scene {
