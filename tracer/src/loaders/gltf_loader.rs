@@ -20,7 +20,7 @@ pub fn load_gltf(path: &str) -> GData {
 
                 // Attributes
                 for (semantic, _) in primitive.attributes() {
-                    info!("-- {:?}", semantic);
+                    info!("--- {:?}", semantic);
                 }
 
                 // Positions
