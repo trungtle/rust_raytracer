@@ -489,9 +489,6 @@ impl eframe::App for RustracerApp {
 
                 // Convert Vec<Spectrum> to Vec<u8> in RGBA format
                 let mut rgba_pixels = Vec::with_capacity((SCREEN_WIDTH * SCREEN_HEIGHT * 4) as usize);
-                for y in (0..=self.height - 1).rev() {
-                    for x in 0..self.width {
-
                 for spectrum in &gamma_corrected_spectrum {
                     let rgb = spectrum.to_rgb(); // Assumes to_rgb() -> Vec3 in [0,1]
 

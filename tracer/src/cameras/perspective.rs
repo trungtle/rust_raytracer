@@ -48,7 +48,7 @@ impl PerspectiveCamera {
         let focus_dist = (eye - look_at).length();
         let aperture = 0.02;
         let vfov = 40.;
-        let aspect = 1.;
+        let aspect = width as f32 / height as f32;
 
         let theta = vfov * std::f32::consts::PI / 180.;
         let half_height = (theta * 0.5).tan();

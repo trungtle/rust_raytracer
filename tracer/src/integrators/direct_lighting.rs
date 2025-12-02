@@ -10,8 +10,8 @@ use crate::core::{
     spectrum::Spectrum, view::View,
 };
 
-pub const SCREEN_WIDTH: u32 = 400;
-pub const SCREEN_HEIGHT: u32 = 400;
+pub const SCREEN_WIDTH: u32 = 1280;
+pub const SCREEN_HEIGHT: u32 = 720;
 pub const SAMPLES_PER_PIXEL: u8 = 5;
 
 #[derive(Copy, Clone, Debug)]
@@ -87,16 +87,15 @@ impl DirectLightingIntegrator {
     }
     
     // Raytrace one fragment (pixel)
-    fn li(fragment: &Fragment, scene: &Scene, settings: &RenderSettings) -> Fragment {
+    fn li(fragment: &Fragment, scene: &Scene) -> Fragment {
         // TODO: Turn depth into a paramter
         const MAX_DEPTH: u32 = 100;
 
         let mut new_fragment = Fragment::default();
         new_fragment.ray = fragment.ray;
-        //new_fragment.acc_spectrum = Spectrum::ColorRGB(Vec3::from(0.0));
         for depth in 0..MAX_DEPTH {
             new_fragment.depth = depth;
-            new_fragment = DirectLightingIntegrator::li_one_bounce(&new_fragment, &scene.clone(), &settings);
+            new_fragment = DirectLightingIntegrator::li_one_bounce(&new_fragment, &scene.clone());
             if new_fragment.terminate {
                 break;
             }
@@ -110,8 +109,7 @@ impl DirectLightingIntegrator {
     // Ray trace one bounce
     fn li_one_bounce( 
         current_fragment: &Fragment,
-        scene: &Scene,
-        render_setings: &RenderSettings
+        scene: &Scene
     ) -> Fragment {
             let mut new_fragment = current_fragment.clone();
             let mut isect = SurfaceInteraction::new();
@@ -198,27 +196,22 @@ impl DirectLightingIntegrator {
                 };
                 
                 let Spectrum::ColorRGB(mut acc_spectrum) = fragment.acc_spectrum;
-                // for _ in 0..samples_per_pixel {
-                    let uv: Vec2 = Sampler::sample_from_pixel(
-                        Vec2 {
-                            0: x as Float,
-                            1: y as Float,
-                        },
-                        view.width,
-                        view.height,
-                    );
+                let uv: Vec2 = Sampler::sample_from_pixel(
+                    Vec2 {
+                        0: x as Float,
+                        1: y as Float,
+                    },
+                    view.width,
+                    view.height,
+                );
 
-                    fragment.ray = scene.persp_camera.get_ray(&uv);
-                    let new_fragment = DirectLightingIntegrator::li(&fragment, &scene, &render_settings);
+                fragment.ray = scene.persp_camera.get_ray(&uv);
+                let new_fragment = DirectLightingIntegrator::li(&fragment, &scene);
 
-                    let Spectrum::ColorRGB(new_spectrum) = new_fragment.acc_spectrum;
+                let Spectrum::ColorRGB(new_spectrum) = new_fragment.acc_spectrum;
 
-                    // Copy the state of this fragment to new framebuffer,
-                    // except for the color since we still need to average over all the samples.
-                    // new_frame.depths[frag_index] = new_fragment.depth;
-                    // new_frame.rays[frag_index] = new_fragment.ray;
-                    new_frame.terminated[frag_index] = new_fragment.terminate;
-                // }
+                // Copy the terminate states of this fragment to new framebuffer,
+                new_frame.terminated[frag_index] = new_fragment.terminate;
                 acc_spectrum = acc_spectrum * (framebuffer.current_sample - 1) as Float;
                 acc_spectrum = (acc_spectrum + new_spectrum) / (framebuffer.current_sample as Float);                    
                 acc_spectrum = acc_spectrum.clamp(0., 1.);
@@ -241,7 +234,7 @@ impl DirectLightingIntegrator {
         total_spectrums.par_iter_mut().enumerate().for_each(|(i, acc_spectrum)| {
             // For each pixel
             let x: u32 = i as u32 % view.width;
-            let y: u32 = i as u32 / view.width;
+            let y: u32 = view.height - (i as u32 / view.width) - 1;
 
             // Initialize fragment
             let frag_index = (x + (view.height - y - 1) * view.width) as usize;
@@ -253,37 +246,20 @@ impl DirectLightingIntegrator {
 
             };
                             
-            // Accumulate the total spectrum over all the samples per pixel
-            // let mut total_spectrum = (0..samples_per_pixel)
-            //     .into_par_iter()
-            //     .map(|_sample| {
-                    let uv: Vec2 = Sampler::sample_from_pixel(
-                        Vec2 {
-                            0: x as Float,
-                            1: y as Float,
-                        },
-                        view.width,
-                        view.height,
-                    );
+            let uv: Vec2 = Sampler::sample_from_pixel(
+                Vec2 {
+                    0: x as Float,
+                    1: y as Float,
+                },
+                view.width,
+                view.height,
+            );
 
-                    fragment.ray = scene.persp_camera.get_ray(&uv);
-                    let new_fragment = DirectLightingIntegrator::li(&fragment, &scene, &render_setings);
+            fragment.ray = scene.persp_camera.get_ray(&uv);
+            let new_fragment = DirectLightingIntegrator::li(&fragment, &scene);
 
-                    let Spectrum::ColorRGB(new_spectrum) = new_fragment.acc_spectrum;
+            let Spectrum::ColorRGB(new_spectrum) = new_fragment.acc_spectrum;
 
-                    // Copy the state of this fragment to new framebuffer,
-                    // except for the color since we still need to average over all the samples.
-                    // new_frame.depths[frag_index] = new_fragment.depth;
-                    // new_frame.rays[frag_index] = new_fragment.ray;
-                    // new_frame.terminated[frag_index] = new_fragment.terminate;
-
-                    // Return the accumulated color to sum it up
-                    // let Spectrum::ColorRGB(color) = new_fragment.acc_spectrum;
-                    // color
-                // })
-                // .sum::<Vec3>();
-
-            // total_spectrum /= samples_per_pixel as Float;
             *acc_spectrum = *acc_spectrum * (framebuffer.current_sample - 1) as Float;
             *acc_spectrum = (*acc_spectrum + new_spectrum) / (framebuffer.current_sample as Float);
         });
@@ -301,7 +277,6 @@ impl DirectLightingIntegrator {
         if render_setings.single_thread {
             DirectLightingIntegrator::render_single_thread(scene, view, framebuffer, render_setings)
         } else {
-            // Parallel version
             DirectLightingIntegrator::render_parallel(scene, view, framebuffer, render_setings)
         }
     }
