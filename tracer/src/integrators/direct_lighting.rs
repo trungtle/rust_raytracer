@@ -176,7 +176,6 @@ impl DirectLightingIntegrator {
         scene: &Scene,
         view: &View,
         framebuffer: &FrameBuffer,
-        render_settings: &RenderSettings
     ) -> FrameBuffer {
         let mut new_frame = FrameBuffer::new(view.width, view.height);
         new_frame.current_sample = framebuffer.current_sample;
@@ -224,8 +223,7 @@ impl DirectLightingIntegrator {
     pub fn render_parallel(
         scene: &Scene,
         view: &View,
-        framebuffer: &FrameBuffer,
-        render_setings: &RenderSettings
+        framebuffer: &FrameBuffer
     ) -> FrameBuffer {
         let mut new_frame = FrameBuffer::new(view.width, view.height);
         new_frame.current_sample = framebuffer.current_sample;
@@ -275,9 +273,9 @@ impl DirectLightingIntegrator {
         render_setings: &RenderSettings
     ) -> FrameBuffer {
         if render_setings.single_thread {
-            DirectLightingIntegrator::render_single_thread(scene, view, framebuffer, render_setings)
+            DirectLightingIntegrator::render_single_thread(scene, view, framebuffer)
         } else {
-            DirectLightingIntegrator::render_parallel(scene, view, framebuffer, render_setings)
+            DirectLightingIntegrator::render_parallel(scene, view, framebuffer)
         }
     }
 }
